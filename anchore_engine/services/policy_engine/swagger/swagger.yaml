@@ -24,6 +24,21 @@ security:
   - anchore_basic: []
 
 paths:
+  /policy_spec:
+    get:
+      summary: Describe the policy language spec implemented by this service.
+      description: Get the policy language spec for this service
+      operationId: describe_policy
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Policy Language Description
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/GateSpec"
+      x-swagger-router-controller: anchore_engine.services.policy_engine.api.controllers.synchronous_operations
   /status:
     get:
       summary: Get the status of the service
@@ -751,4 +766,47 @@ definitions:
         type: string
         description: Timestamp of mapping creation
         format: "date-time"
-
+  GateSpec:
+    type: object
+    description: A description of the set of gates available in this engine and the triggers and parameters supported
+    properties:
+      name:
+        type: string
+        description: Gate name, as it would appear in a policy document
+      description:
+        type: string
+        description: Description of the gate
+      triggers:
+        type: array
+        description: List of the triggers that can fire for this Gate
+        items:
+          $ref: "#/definitions/TriggerSpec"
+  TriggerSpec:
+    type: object
+    description: Definition of a trigger and its parameters
+    properties:
+      name:
+        type: string
+        description: Name of the trigger as it would appear in a policy document
+      description:
+        type: string
+        description: Trigger description for what it tests and when it will fire during evaluation
+      parameters:
+        type: array
+        description: The list of parameters that are valid for this trigger
+        items:
+          $ref: "#/definitions/TriggerParamSpec"
+  TriggerParamSpec:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Parameter name as it appears in policy document
+      description:
+        type: string
+      validator:
+        type: string
+        description: If present, a validation criteria for the values of this parameter--typically a regex
+      validator_description:
+        type: string
+        description: A human readable description of the validation criteria

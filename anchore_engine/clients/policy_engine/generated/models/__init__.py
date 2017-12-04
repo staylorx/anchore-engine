@@ -18,6 +18,7 @@ from .distro_mapping import DistroMapping
 from .error_response import ErrorResponse
 from .event_status import EventStatus
 from .feed_update_notification import FeedUpdateNotification
+from .gate_spec import GateSpec
 from .image import Image
 from .image_ingress_request import ImageIngressRequest
 from .image_ingress_response import ImageIngressResponse
@@ -40,6 +41,8 @@ from .policy_rule import PolicyRule
 from .policy_rule_params import PolicyRuleParams
 from .table_style_result import TableStyleResult
 from .tag import Tag
+from .trigger_param_spec import TriggerParamSpec
+from .trigger_spec import TriggerSpec
 from .update_event import UpdateEvent
 from .vulnerability_listing import VulnerabilityListing
 from .whitelist import Whitelist

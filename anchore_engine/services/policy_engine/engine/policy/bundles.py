@@ -1140,7 +1140,6 @@ def get_bundle(bundle_id):
     #     return bundle.to_dict()
 
 
-
 def build_bundle(bundle_json, for_tag=None):
     """
     Parse and build an executable bundle from the input. Handles versions to construct the
@@ -1165,4 +1164,3 @@ def build_bundle(bundle_json, for_tag=None):
     else:
         raise ValueError('No bundle json found')
     return bundle
-

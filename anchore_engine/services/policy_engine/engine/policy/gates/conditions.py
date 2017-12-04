@@ -8,7 +8,7 @@ class AttributeListValidator(InputValidator):
         self.attrs = attrs
 
     def validation_criteria(self):
-        return 'In: {}'.format(self.attrs)
+        return 'In: {}'.format(','.join(self.attrs))
 
     def __call__(self, *args, **kwargs):
         if args and args[0]:
@@ -37,7 +37,7 @@ class CheckOperations(InputValidator):
         return self.ops[name]
 
     def validation_criteria(self):
-        return 'In: {}'.format(self.ops.keys())
+        return 'In: {}'.format(','.join(self.ops.keys()))
 
     def __call__(self, *args, **kwargs):
         if args and args[0]:
