@@ -3,13 +3,13 @@ import unittest
 from test.services.policy_engine.engine.policy.gates import GateUnitTest
 from anchore_engine.db import Image, ImagePackageManifestEntry
 from anchore_engine.services.policy_engine.engine.policy.gate import ExecutionContext
-from anchore_engine.services.policy_engine.engine.policy.gates.check_package_info import PackageCheckGate, PkgNotPresentTrigger, VerifyTrigger
+from anchore_engine.services.policy_engine.engine.policy.gates.packages import PackagesCheckGate, PkgNotPresentTrigger, VerifyTrigger, BlackListFullMatchTrigger, BlacklistNameMatchTrigger
 from anchore_engine.db import get_thread_scoped_session
 
 
 class PackageCheckGateTest(GateUnitTest):
     __default_image__ = 'debian' # Testing against a specifically broken analysis output (hand edited to fail in predictable ways)
-    gate_clazz = PackageCheckGate
+    gate_clazz = PackagesCheckGate
 
     def get_initialized_trigger(self, name, config=None, **kwargs):
         clazz = self.gate_clazz.get_trigger_named(name)
@@ -18,6 +18,26 @@ class PackageCheckGateTest(GateUnitTest):
         gate = trigger.gate_cls()
 
         return trigger, gate, context
+
+    def test_fullmatch(self):
+        t, gate, test_context = self.get_initialized_trigger(BlackListFullMatchTrigger.__trigger_name__,
+                                                             blacklist_fullmatch='binutils|2.25-5+deb8u1,libssl|123')
+        db = get_thread_scoped_session()
+        image = db.query(Image).get((self.test_env.get_images_named('node')[0][0], '0'))
+        test_context = gate.prepare_context(image, test_context)
+        t.evaluate(image, test_context)
+        print('Fired: {}'.format(t.fired))
+        self.assertEqual(len(t.fired), 1)
+
+    def test_namematch(self):
+        t, gate, test_context = self.get_initialized_trigger(BlacklistNameMatchTrigger.__trigger_name__,
+                                                             blacklist_namematch='binutils,libssl')
+        db = get_thread_scoped_session()
+        image = db.query(Image).get((self.test_env.get_images_named('node')[0][0], '0'))
+        test_context = gate.prepare_context(image, test_context)
+        t.evaluate(image, test_context)
+        print('Fired: {}'.format(t.fired))
+        self.assertEqual(len(t.fired), 1)
 
     def test_pkgnotpresentdiff(self):
         db = get_thread_scoped_session()

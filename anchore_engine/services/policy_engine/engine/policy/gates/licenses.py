@@ -4,10 +4,11 @@ from anchore_engine.services.policy_engine.engine.policy.params import CommaDeli
 
 
 class FullMatchTrigger(BaseTrigger):
-    __trigger_name__ = 'licfullmatch'
+    __aliases__ = ['licfullmatch']
+    __trigger_name__ = 'blacklist_exact_match'
     __description__ = 'triggers if the evaluated image has a package installed with software distributed under the specified (exact match) license(s)'
 
-    license_blacklist = CommaDelimitedStringListParameter(name='licblacklist_fullmatch', description='List of license names to blacklist exactly')
+    license_blacklist = CommaDelimitedStringListParameter(name='licenses', aliases=['licblacklist_fullmatch'], description='List of license names to blacklist exactly', is_required=True)
 
     def evaluate(self, image_obj, context):
         fullmatchpkgs = []
@@ -22,10 +23,11 @@ class FullMatchTrigger(BaseTrigger):
 
 
 class SubstringMatchTrigger(BaseTrigger):
-    __trigger_name__ = 'licsubmatch'
+    __trigger_name__ = 'blacklist_partial_match'
+    __aliases__ = ['licsubmatch']
     __description__ = 'triggers if the evaluated image has a package installed with software distributed under the specified (substring match) license(s)'
 
-    licenseblacklist_submatches = CommaDelimitedStringListParameter(name='licblacklist_submatch', description='List of strings to do substring match for blacklist')
+    licenseblacklist_submatches = CommaDelimitedStringListParameter(name='licenses', aliases=['licblacklist_submatch'], description='List of strings to do substring match for blacklist', is_required=True)
 
     def evaluate(self, image_obj, context):
         matchpkgs = []
@@ -38,13 +40,13 @@ class SubstringMatchTrigger(BaseTrigger):
                     matchpkgs.append(pkg + "(" + license + ")")
 
         if matchpkgs:
-            self._fire(
-                msg='LICSUBMATCH Packages are installed that have blacklisted licenses: ' + ', '.join(matchpkgs))
+            self._fire(msg='LICSUBMATCH Packages are installed that have blacklisted licenses: ' + ', '.join(matchpkgs))
 
 
-class LicenseBlacklistGate(Gate):
-    __gate_name__ = 'licblacklist'
-    __description__ = 'Package License Blacklists'
+class LicensesGate(Gate):
+    __gate_name__ = 'licenses'
+    __aliases__ = ['licblacklist']
+    __description__ = 'License checks and management'
     __triggers__ = [
         FullMatchTrigger,
         SubstringMatchTrigger

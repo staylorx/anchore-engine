@@ -287,6 +287,7 @@ class TriggerParameter(object):
         self.related_params = related_to
         self._param_value = None
         self.sort_order = kwargs.get('sort_order', -1)
+        self.aliases = kwargs.get('aliases', [])
 
         if validator:
             self.validator = validator
@@ -327,9 +328,10 @@ class TriggerParameter(object):
 
         return {
             "name": self.name,
+            "aliases": self.aliases,
             "description": self.description,
             "is_required": self.required,
-            "related_paramters": self.related_params,
+            "related_parameters": self.related_params,
             "validator": self.validator.json()
         }
 

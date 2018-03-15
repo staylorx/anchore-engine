@@ -42,7 +42,8 @@ CONDITIONS = [
 
 
 class EffectiveUserTrigger(BaseTrigger):
-    __trigger_name__ = 'effectiveuser'
+    __trigger_name__ = 'effective_user'
+    __aliases__ = ['effectiveuser']
     __description__ = 'Triggers if the effective user for the container is either root when not allowed or is not in a whitelist'
 
     allowed_users = CommaDelimitedStringListParameter(name='allowed', description='List of user names allowed to be the effective user (last user entry) in the images history', is_required=False)
@@ -78,7 +79,8 @@ class EffectiveUserTrigger(BaseTrigger):
 
 
 class DirectiveCheckTrigger(BaseTrigger):
-    __trigger_name__ = 'directivecheck'
+    __aliases__ = ['directivecheck']
+    __trigger_name__ = 'directive_check'
     __description__ = 'Triggers if any directives in the list are found to match the described condition in the dockerfile'
 
     directive = EnumStringParameter(name='directives', description='The Dockerfile instruction to check', enum_values=DIRECTIVES, is_required=True, related_to='check', sort_order=1)
@@ -126,10 +128,11 @@ class DirectiveCheckTrigger(BaseTrigger):
 
 
 class ExposeTrigger(BaseTrigger):
-    __trigger_name__ = 'expose'
+    __trigger_name__ = 'exposed_ports'
+    __aliases__ = ['expose']
 
-    allowed_ports = CommaDelimitedNumberListParameter(name='allowedports', description='Comma delimited list of port numbers to allow (as a string)', is_required=False)
-    denied_ports = CommaDelimitedNumberListParameter(name='deniedports', description='Comma delimited list of port numbers to deny (as a string)', is_required=False)
+    allowed_ports = CommaDelimitedNumberListParameter(name='whitelisted', aliases=['allowedports'], description='Comma delimited list of port numbers to allow (as a string)', is_required=False)
+    denied_ports = CommaDelimitedNumberListParameter(name='blacklisted', aliases=['deniedports'], description='Comma delimited list of port numbers to deny (as a string)', is_required=False)
 
     __description__ = 'triggers if Dockerfile is EXPOSEing ports that are not in ALLOWEDPORTS, or are in DENIEDPORTS'
 
@@ -196,7 +199,8 @@ class ExposeTrigger(BaseTrigger):
 
 
 class NoFromTrigger(BaseTrigger):
-    __trigger_name__ = 'nofrom'
+    __trigger_name__ = 'no_from'
+    __aliases__ = ['nofrom']
     __params__ = None
     __description__ = 'triggers if there is no FROM line specified in the Dockerfile'
 
@@ -211,7 +215,8 @@ class NoFromTrigger(BaseTrigger):
 
 
 class FromScratch(BaseTrigger):
-    __trigger_name__ = 'fromscratch'
+    __aliases__ = ['fromscratch']
+    __trigger_name__ = 'from_scratch'
     __description__ = 'triggers the FROM line specified "scratch" as the parent'
 
     def evaluate(self, image_obj, context):
@@ -229,7 +234,8 @@ class FromScratch(BaseTrigger):
 
 
 class NoTag(BaseTrigger):
-    __trigger_name__ = 'notag'
+    __aliases__ = ['notag']
+    __trigger_name__ = 'missing_tag'
     __description__ = 'triggers if the FROM container specifies a repo but no explicit, non-latest tag'
 
     def evaluate(self, image_obj, context):
@@ -253,7 +259,8 @@ class NoTag(BaseTrigger):
 
 
 class Sudo(BaseTrigger):
-    __trigger_name__ = 'sudo'
+    __trigger_name__ = 'uses_sudo'
+    __aliases__ = ['sudo']
     __description__ = 'triggers if the Dockerfile contains operations running with sudo'
 
     def evaluate(self, image_obj, context):
@@ -268,7 +275,8 @@ class Sudo(BaseTrigger):
 
 
 class VolumePresent(BaseTrigger):
-    __trigger_name__ = 'volumepresent'
+    __trigger_name__ = 'defines_volumes'
+    __aliases__ = ['volumepresent']
     __description__ = 'triggers if the Dockerfile contains a VOLUME line'
 
     def evaluate(self, image_obj, context):
@@ -279,7 +287,8 @@ class VolumePresent(BaseTrigger):
             self._fire(msg='Dockerfile contains a VOLUME line: ' + str(line))
 
 class NoHealthCheck(BaseTrigger):
-    __trigger_name__ = 'nohealthcheck'
+    __trigger_name__ = 'missing_healthcheck'
+    __aliases__ = ['nohealthcheck']
     __description__ = 'triggers if the Dockerfile does not contain any HEALTHCHECK instructions'
     __msg__ = 'Dockerfile does not contain any HEALTHCHECK instructions'
 
@@ -292,8 +301,9 @@ class NoHealthCheck(BaseTrigger):
 
 
 class NoDockerfile(BaseTrigger):
-    __trigger_name__ = 'nodockerfile'
-    __description__ = 'triggers if anchore analysis was performed without supplying a real Dockerfile'
+    __trigger_name__ = 'not_provided'
+    __aliases__ = ['nodockerfile']
+    __description__ = 'Triggers if anchore analysis was performed without supplying a real Dockerfile'
     __msg__ = 'Image was not analyzed with an actual Dockerfile'
 
     def evaluate(self, image_obj, context):
@@ -305,7 +315,8 @@ class NoDockerfile(BaseTrigger):
 
 
 class DockerfileGate(Gate):
-    __gate_name__ = 'dockerfilecheck'
+    __gate_name__ = 'dockerfile'
+    __aliases__ = ['dockerfilecheck']
     __description__ = 'Check Dockerfile Instructions'
     __triggers__ = [
         DirectiveCheckTrigger,

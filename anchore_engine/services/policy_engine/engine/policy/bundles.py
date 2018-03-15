@@ -861,6 +861,8 @@ class ExecutableWhitelistItem(object):
                 return trigger_match
 
     def matches(self, fired_trigger_obj):
+        # TODO: add alias checks here for backwards compat
+
         return self.gate == fired_trigger_obj.trigger.gate_cls.__gate_name__.lower() and \
                (self.trigger_id == fired_trigger_obj.id or is_match(regexify, self.trigger_id, fired_trigger_obj.id))
 

@@ -14,7 +14,8 @@ NPM_MATCH_KEY = 'matched_feed_npms'
 
 
 class NotLatestTrigger(BaseTrigger):
-    __trigger_name__ = 'npmnotlatest'
+    __trigger_name__ = 'newer_version_in_feed'
+    __aliases__ = ['npmnotlatest']
     __description__ = 'triggers if an installed NPM is not the latest version according to NPM data feed'
 
     def evaluate(self, image_obj, context):
@@ -41,7 +42,8 @@ class NotLatestTrigger(BaseTrigger):
 
 
 class NotOfficialTrigger(BaseTrigger):
-    __trigger_name__ = 'npmnotofficial'
+    __trigger_name__ = 'unknown_in_feeds'
+    __aliases__ = ['npmnotofficial']
     __description__ = 'triggers if an installed NPM is not in the official NPM database, according to NPM data feed'
 
     def evaluate(self, image_obj, context):
@@ -69,7 +71,8 @@ class NotOfficialTrigger(BaseTrigger):
 
 
 class BadVersionTrigger(BaseTrigger):
-    __trigger_name__ = 'npmbadversion'
+    __trigger_name__ = 'version_not_in_feeds'
+    __aliases__ = ['npmbadversion']
     __description__ = 'triggers if an installed NPM version is not listed in the official NPM feed as a valid version'
 
     def evaluate(self, image_obj, context):
@@ -100,10 +103,11 @@ class BadVersionTrigger(BaseTrigger):
 
 
 class PkgFullMatchTrigger(BaseTrigger):
-    __trigger_name__ = 'npmpkgfullmatch'
+    __trigger_name__ = 'blacklisted_name_version'
+    __aliases__ = ['npmpkgfullmatch']
     __description__ = 'triggers if the evaluated image has an NPM package installed that matches one in the list given as a param (package_name|vers)'
 
-    blacklist_names = NameVersionStringListParameter(name='blacklist_npmfullmatch', description='List of name|version matches for full package match on blacklist')
+    blacklist_names = NameVersionStringListParameter(name='names_versions', aliases=['blacklist_npmfullmatch'], description='List of name|version matches for full package match on blacklist')
 
     def evaluate(self, image_obj, context):
         """
@@ -130,10 +134,11 @@ class PkgFullMatchTrigger(BaseTrigger):
 
 
 class PkgNameMatchTrigger(BaseTrigger):
-    __trigger_name__ = 'npmpkgnamematch'
+    __trigger_name__ = 'blacklisted_names'
+    __alises__ = ['npmpkgnamematch']
     __description__ = 'triggers if the evaluated image has an NPM package installed that matches one in the list given as a param (package_name)'
 
-    npmname_blacklist = CommaDelimitedStringListParameter(name='blacklist_npmnamematch', description='List of name strings to blacklist npm package names against')
+    npmname_blacklist = CommaDelimitedStringListParameter(name='names', aliases=['blacklist_npmnamematch'], description='List of name strings to blacklist npm package names against')
 
     def evaluate(self, image_obj, context):
         npms = image_obj.npms
@@ -152,7 +157,8 @@ class PkgNameMatchTrigger(BaseTrigger):
 
 
 class NoFeedTrigger(BaseTrigger):
-    __trigger_name__ = 'npmnofeed'
+    __trigger_name__ = 'feed_data_unavailable'
+    __aliases__ = ['npmnofeed']
     __description__ = 'triggers if anchore does not have access to the NPM data feed'
 
     def evaluate(self, image_obj, context):
@@ -168,7 +174,8 @@ class NoFeedTrigger(BaseTrigger):
 
 
 class NpmCheckGate(Gate):
-        __gate_name__ = 'npmcheck'
+        __gate_name__ = 'npms'
+        __aliases__ = ['npmcheck']
         __description__ = 'NPM Checks'
         __triggers__ = [
             NotLatestTrigger,

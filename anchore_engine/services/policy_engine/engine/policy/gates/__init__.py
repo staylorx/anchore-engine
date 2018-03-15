@@ -1,15 +1,11 @@
 # Import all valid gates
 
 from .dockerfile import DockerfileGate
-from .file_content import FileCheckGate
-from .fileparse_passwd import FileparsePasswordGate
-#from .image_base_check import ImageCheckGate
-from .check_package_info import PackageCheckGate
-#from .pkg_diff import PkgDiffGate
+from .files import FileCheckGate
+from .etc_passwd_content import FileparsePasswordGate
+from .packages import PackagesCheckGate
 from .anchoresec import AnchoreSecGate
-from .package_blacklist import PackageBlacklistGate
-#from .check_suidfiles import SuidDiffGate
-from .license_blacklist import LicenseBlacklistGate
+from .licenses import LicensesGate
 from .gem_check import GemCheckGate
 from .npm_check import NpmCheckGate
 from .secret_check import SecretCheckGate

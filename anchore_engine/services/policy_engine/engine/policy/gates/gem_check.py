@@ -12,8 +12,10 @@ FEED_KEY = 'gem'
 GEM_MATCH_KEY= 'matched_feed_gems'
 GEM_LIST_KEY = 'gems'
 
+
 class NotLatestTrigger(BaseTrigger):
-    __trigger_name__ = 'gemnotlatest'
+    __trigger_name__ = 'newer_version_in_feed'
+    __aliases__ = ['gemnotlatest']
     __description__ = 'triggers if an installed GEM is not the latest version according to GEM data feed'
 
     def evaluate(self, image_obj, context):
@@ -40,7 +42,8 @@ class NotLatestTrigger(BaseTrigger):
 
 
 class NotOfficialTrigger(BaseTrigger):
-    __trigger_name__ = 'gemnotofficial'
+    __trigger_name__ = 'unknown_in_feeds'
+    __aliases__ = ['gemnotofficial']
     __description__ = 'triggers if an installed GEM is not in the official GEM database, according to GEM data feed'
 
     def evaluate(self, image_obj, context):
@@ -68,7 +71,8 @@ class NotOfficialTrigger(BaseTrigger):
 
 
 class BadVersionTrigger(BaseTrigger):
-    __trigger_name__ = 'gembadversion'
+    __trigger_name__ = 'version_not_in_feeds'
+    __aliases__ = ['gembadversion']
     __description__ = 'triggers if an installed GEM version is not listed in the official GEM feed as a valid version'
 
     def evaluate(self, image_obj, context):
@@ -99,12 +103,10 @@ class BadVersionTrigger(BaseTrigger):
 
 
 class PkgFullMatchTrigger(BaseTrigger):
-    __trigger_name__ = 'gempkgfullmatch'
+    __trigger_name__ = 'blacklisted_name_version'
+    __aliases__ = ['gempkgfullmatch']
     __description__ = 'triggers if the evaluated image has an GEM package installed that matches one in the list given as a param (package_name|vers)'
-    # __params__ = {
-    #     'BLACKLIST_GEMFULLMATCH': NameVersionListValidator()
-    # }
-    fullmatch_blacklist = NameVersionStringListParameter(name='blacklist_gemfullmatch', description='List of name|version entries that are matched exactly for blacklist', is_required=False)
+    fullmatch_blacklist = NameVersionStringListParameter(name='names_versions', aliases=['blacklist_gemfullmatch'], description='List of name|version entries that are matched exactly for blacklist', is_required=False)
 
     def evaluate(self, image_obj, context):
         """
@@ -131,12 +133,10 @@ class PkgFullMatchTrigger(BaseTrigger):
 
 
 class PkgNameMatchTrigger(BaseTrigger):
-    __trigger_name__ = 'gempkgnamematch'
+    __trigger_name__ = 'blacklisted_names'
+    __aliases__ = ['gempkgnamematch']
     __description__ = 'triggers if the evaluated image has an GEM package installed that matches one in the list given as a param (package_name)'
-    #__params__ = {
-    #    'BLACKLIST_GEMNAMEMATCH': CommaDelimitedStringListValidator()
-    #}
-    namematch_blacklist = CommaDelimitedStringListParameter(name='blacklist_gemnamematch', description='List of gem package names that are blacklisted and will cause trigger to fire if detected in image')
+    namematch_blacklist = CommaDelimitedStringListParameter(name='names', aliases=['blacklist_gemnamematch'], description='List of gem package names that are blacklisted and will cause trigger to fire if detected in image')
 
     def evaluate(self, image_obj, context):
         gems = image_obj.gems
@@ -156,7 +156,8 @@ class PkgNameMatchTrigger(BaseTrigger):
 
 
 class NoFeedTrigger(BaseTrigger):
-    __trigger_name__ =  'gemnofeed'
+    __trigger_name__ = 'feed_data_unavailable'
+    __aliases__ = ['gemnofeed']
     __description__ = 'triggers if anchore does not have access to the GEM data feed'
     __msg__ = "GEMNOFEED GEM packages are present but the anchore GEM feed is not available - will be unable to perform checks that require feed data"
 
@@ -173,7 +174,8 @@ class NoFeedTrigger(BaseTrigger):
 
 
 class GemCheckGate(Gate):
-        __gate_name__ = "gemcheck"
+        __gate_name__ = 'ruby_gems'
+        __aliases__ = ['gemcheck']
         __description__ = 'Ruby Gem Checks'
         __triggers__ = [
             NotLatestTrigger,

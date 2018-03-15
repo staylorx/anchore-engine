@@ -13,9 +13,9 @@ class VerifyTrigger(BaseTrigger):
     __trigger_name__ = 'verify'
     __description__ = 'Check package integrity against package db in in the image. Triggers for changes or removal or content in all or the selected DIRS param if provided, and can filter type of check with the CHECK_ONLY param'
 
-    pkgs = CommaDelimitedStringListParameter(name='pkgs', description='List of package names to verify', is_required=False)
-    directories = CommaDelimitedStringListParameter(name='dirs', description='List of directories to limit checks to so as to avoid checks on all dir', is_required=False)
-    check_only = CommaDelimitedStringListParameter(name='check_only', description='List of types of checks to perform instead of all', is_required=False)
+    pkgs = CommaDelimitedStringListParameter(name='packages', aliases=['pkgs'], description='List of package names to limit verification', is_required=False)
+    directories = CommaDelimitedStringListParameter(name='directories', aliases=['dirs'], description='List of directories to limit checks to so as to avoid checks on all dir', is_required=False)
+    check_only = CommaDelimitedStringListParameter(name='checks', aliases=['check_only'], description='List of types of checks to perform instead of all', is_required=False)
 
     analyzer_type = 'base'
     analyzer_id = 'file_package_verify'
@@ -24,7 +24,6 @@ class VerifyTrigger(BaseTrigger):
     class VerificationStates(enum.Enum):
         changed = 'changed'
         missing = 'missing'
-
 
     def evaluate(self, image_obj, context):
         pkg_names = self.pkgs.value(default_if_none=[])
@@ -133,12 +132,13 @@ class VerifyTrigger(BaseTrigger):
 
 
 class PkgNotPresentTrigger(BaseTrigger):
-    __trigger_name__ = 'pkgnotpresent'
-    __description__ = 'triggers if the package(s) specified in the params are not installed in the container image. The parameters specify different types of matches.',
+    __trigger_name__ = 'required'
+    __aliases__ = ['pkgnotpresent']
+    __description__ = 'Triggers if the package(s) specified in the params are not installed in the container image. The parameters specify different types of matches.',
 
-    pkg_full_match = NameVersionStringListParameter(name='pkgfullmatch', description='Match these values on both name and exact version. Entries are comma-delimited with a pipe between pkg name and version. E.g. "pkg1|version1,pkg2|version2"', is_required=False)
-    pkg_name_match = CommaDelimitedStringListParameter(name='pkgnamematch', description='List of names to match', is_required=False)
-    pkg_version_match = NameVersionStringListParameter(name='pkgversmatch', description='Names and versions to do a minimum-version check on. Any package in the list with a version less than the specified version will cause the trigger to fire', is_required=False)
+    pkg_full_match = NameVersionStringListParameter(name='names_and_versions', aliases=['pkgfullmatch'], description='Match these values on both name and exact version. Entries are comma-delimited with a pipe between pkg name and version. E.g. "pkg1|version1,pkg2|version2"', is_required=False)
+    pkg_name_match = CommaDelimitedStringListParameter(name='names', aliases=['pkgnamematch'], description='List of names to match', is_required=False)
+    pkg_version_match = NameVersionStringListParameter(name='version_less_than', aliases=['pkgversmatch'], description='Names and versions to do a minimum-version check on. Any package in the list with a version less than the specified version will cause the trigger to fire', is_required=False)
 
     def evaluate(self, image_obj, context):
         fullmatch = self.pkg_full_match.value(default_if_none={})
@@ -188,10 +188,50 @@ class PkgNotPresentTrigger(BaseTrigger):
             self._fire(msg="PKGNOTPRESENT input package (" + str(pkg) + ") is not present in container image")
 
 
-class PackageCheckGate(Gate):
-    __gate_name__ = 'pkgcheck'
+class BlackListFullMatchTrigger(BaseTrigger):
+    __aliases__ = ['pkgfullmatch']
+    __trigger_name__ = 'blacklist_name_version'
+    __description__ = 'triggers if the evaluated image has a package installed that matches one in the list given as a param (package_name|vers)'
+    fullmatch_blacklist = NameVersionStringListParameter(name='name_version_list', aliases=['blacklist_fullmatch'], description='List of package name|version pairs for exact match')
+
+    def evaluate(self, image_obj, context):
+        pkgs = self.fullmatch_blacklist.value() if self.fullmatch_blacklist.value() else []
+
+        for pkg, vers in pkgs.items():
+            try:
+                matches = image_obj.packages.filter(ImagePackage.name == pkg, ImagePackage.version == vers)
+                for m in matches:
+                    self._fire(msg='PKGFULLMATCH Package is blacklisted: ' + m.name + "-" + m.version)
+            except Exception as e:
+                log.exception('Error filtering packages for full match')
+                pass
+
+
+class BlacklistNameMatchTrigger(BaseTrigger):
+    __aliases__ = ['pkgnamematch']
+    __trigger_name__ = 'blacklist_name_only'
+    __description__ = 'triggers if the evaluated image has a package installed that matches one in the list given as a param (package_name)'
+    namematch_blacklist = CommaDelimitedStringListParameter(name='names', aliases=['blacklist_namematch'], description='List of package names to be blacklisted')
+
+    def evaluate(self, image_obj, context):
+        pkg_names = self.namematch_blacklist.value() if self.namematch_blacklist.value() else []
+
+        for pval in pkg_names:
+            try:
+                for pkg in image_obj.packages.filter(ImagePackage.name == pval):
+                    self._fire(msg='PKGNAMEMATCH Package is blacklisted: ' + pkg.name)
+            except Exception as e:
+                log.exception('Error searching packages for blacklisted names')
+                pass
+
+
+class PackagesCheckGate(Gate):
+    __gate_name__ = 'packages'
+    __aliases__ = ['pkgcheck','pkgblacklist']
     __description__ = 'Distro package checks'
     __triggers__ = [
         PkgNotPresentTrigger,
         VerifyTrigger,
+        BlackListFullMatchTrigger,
+        BlacklistNameMatchTrigger
     ]

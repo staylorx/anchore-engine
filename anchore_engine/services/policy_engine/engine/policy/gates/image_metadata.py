@@ -8,7 +8,8 @@ log = get_logger()
 
 
 class ImageMetadataAttributeCheckTrigger(BaseTrigger):
-    __trigger_name__ = 'attributecheck'
+    __trigger_name__ = 'attribute'
+    __aliases__ = ['attributecheck']
     __description__ = 'triggers if a named image attribute matches the given condition'
 
     __ops__ = {
@@ -65,7 +66,8 @@ class ImageMetadataAttributeCheckTrigger(BaseTrigger):
 
 
 class ImageMetadataGate(Gate):
-    __gate_name__ = 'metadatacheck'
+    __gate_name__ = 'image_metadata'
+    __aliases__ = ['metadatacheck']
     __description__ = 'Check Image Metadata'
 
     __triggers__ = [

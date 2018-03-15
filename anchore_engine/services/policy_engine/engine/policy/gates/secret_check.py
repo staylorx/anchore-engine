@@ -7,9 +7,10 @@ log = get_logger()
 
 
 class SecretContentMatchTrigger(BaseTrigger):
-    __trigger_name__ = 'contentmatch'
+    __trigger_name__ = 'regex_match'
+    __aliases__ = ['contentmatch']
     __description__ = 'Triggers if the content search analyzer has found any matches.  If the parameter is set, then will only trigger against found matches that are also in the SECRETCHECK_CONTENTREGEXP parameter list.  If the parameter is absent or blank, then the trigger will fire if the analyzer found any matches.'
-    secret_contentregexp = PipeDelimitedStringListParameter(name='secretcheck_contentregexp', description='Names of content regexps configured in the analyzer that should trigger if found in the image')
+    secret_contentregexp = PipeDelimitedStringListParameter(name='named_regexes', aliases=['secretcheck_contentregexp'], description='Names of content regexps configured in the analyzer that should trigger if found in the image')
 
     def evaluate(self, image_obj, context):
         match_filter = self.secret_contentregexp.value(default_if_none=[])
@@ -40,9 +41,10 @@ class SecretContentMatchTrigger(BaseTrigger):
 
 
 class SecretFilenameMatchTrigger(BaseTrigger):
-    __trigger_name__ = 'filenamematch'
+    __trigger_name__ = 'filename_filtered_regex_match'
+    __aliases__ = ['filenamematch']
     __description__ = 'Triggers if a file exists in the container that matches with any of the regular expressions given as SECRETCHECK_NAMEREGEXP parameters.'
-    name_regexps = PipeDelimitedStringListParameter(name='secretcheck_nameregexp', description='List of regexp names in the analyzer that should trigger if matched in the image')
+    name_regexps = PipeDelimitedStringListParameter(name='named_regexes', aliases=['secretcheck_nameregexp'], description='List of regexp names in the analyzer that should trigger if matched in the image')
 
     def evaluate(self, image_obj, context):
         fname_regexps = self.name_regexps.value(default_if_none=[])
@@ -64,7 +66,8 @@ class SecretFilenameMatchTrigger(BaseTrigger):
 
 
 class SecretCheckGate(Gate):
-    __gate_name__ = 'secretcheck'
+    __gate_name__ = 'secret_scans'
+    __aliases__ = ['secretcheck']
     __description__ = 'Checks for Secrets Found in the Image'
     __triggers__ = [
         SecretContentMatchTrigger,

@@ -4,7 +4,8 @@ from anchore_engine.db import AnalysisArtifact
 
 
 class FileNotStoredTrigger(BaseTrigger):
-    __trigger_name__ = 'filenotstored'
+    __trigger_name__ = 'content_not_available'
+    __aliases__ = ['filenotstored']
     __description__ = 'triggers if the /etc/passwd file is not present/stored in the evaluated image'
     __params__ = None
     __msg__ = 'FILENOTSTORED Cannot locate /etc/passwd in image stored files archive: check analyzer settings'
@@ -38,10 +39,11 @@ class PentryBlacklistMixin(object):
 
 
 class UsernameMatchTrigger(BaseTrigger, PentryBlacklistMixin):
-    __trigger_name__ = 'usernamematch'
+    __trigger_name__ = 'blacklisted_usernames'
+    __aliases__ = ['usernamematch']
     __description__ = 'triggers if specified username is found in the /etc/passwd file'
 
-    user_blacklist = CommaDelimitedStringListParameter(name='usernameblacklist', description='Comma-delimited list of usernames that will cause the trigger to fire if found in /etc/passwd')
+    user_blacklist = CommaDelimitedStringListParameter(name='user_names', aliases=['usernameblacklist'], description='Comma-delimited list of usernames that will cause the trigger to fire if found in /etc/passwd', is_required=True)
 
     def evaluate(self, image_obj, context):
         if not context.data.get('passwd_entries'):
@@ -55,10 +57,11 @@ class UsernameMatchTrigger(BaseTrigger, PentryBlacklistMixin):
 
 
 class UserIdMatchTrigger(BaseTrigger, PentryBlacklistMixin):
-    __trigger_name__ = 'useridmatch'
+    __trigger_name__ = 'blacklisted_userids'
+    __aliases__ = ['useridmatch']
     __description__ = 'triggers if specified user id is found in the /etc/passwd file'
 
-    user_id_blacklist = CommaDelimitedNumberListParameter(name='useridblacklist', description='Comma-delimited list of userids (numeric) that will cause the trigger to fire if found in /etc/passwd')
+    user_id_blacklist = CommaDelimitedNumberListParameter(name='user_ids', aliases=['useridblacklist'], description='Comma-delimited list of userids (numeric) that will cause the trigger to fire if found in /etc/passwd', is_required=True)
 
     def evaluate(self, image_obj, context):
         if not context.data.get('passwd_entries'):
@@ -72,10 +75,11 @@ class UserIdMatchTrigger(BaseTrigger, PentryBlacklistMixin):
 
 
 class GroupIdMatchTrigger(BaseTrigger, PentryBlacklistMixin):
-    __trigger_name__ = 'groupidmatch'
+    __trigger_name__ = 'blacklisted_groupids'
+    __aliases__ = ['groupidmatch']
     __description__ = 'triggers if specified group id is found in the /etc/passwd file'
 
-    group_id_blacklist = CommaDelimitedNumberListParameter(name='groupidblacklist', description='Comma-delimited list of groupids (numeric) that will cause the trigger ot fire if found in /etc/passwd')
+    group_id_blacklist = CommaDelimitedNumberListParameter(name='group_ids', aliases=['groupidblacklist'], description='Comma-delimited list of groupids (numeric) that will cause the trigger ot fire if found in /etc/passwd')
 
     def evaluate(self, image_obj, context):
         if not context.data.get('passwd_entries'):
@@ -89,10 +93,11 @@ class GroupIdMatchTrigger(BaseTrigger, PentryBlacklistMixin):
 
 
 class ShellMatchTrigger(BaseTrigger, PentryBlacklistMixin):
-    __trigger_name__ = 'shellmatch'
+    __trigger_name__ = 'blacklisted_shells'
+    __aliases__ = ['shellmatch']
     __description__ = 'triggers if specified login shell for any user is found in the /etc/passwd file'
 
-    shell_blacklist = CommaDelimitedStringListParameter(name='shellblacklist', description='Comma-delimiter list of group')
+    shell_blacklist = CommaDelimitedStringListParameter(name='shells', aliases=['shellblacklist'], description='Comma-delimiter list of group')
 
     def evaluate(self, image_obj, context):
         if not context.data.get('passwd_entries'):
@@ -108,10 +113,11 @@ class ShellMatchTrigger(BaseTrigger, PentryBlacklistMixin):
 
 
 class PEntryMatchTrigger(BaseTrigger, PentryBlacklistMixin):
-    __trigger_name__ = 'pentrymatch'
+    __trigger_name__ = 'blacklisted_pentries'
+    __aliases__ = ['pentrymatch']
     __description__ = 'triggers if specified entire passwd entry is found in the /etc/passwd file'
 
-    pentry_blacklist = PipeDelimitedStringListParameter(name='pentryblacklist', description='List of strings to do full match on in /etc/passwd that will result in trigger firing if found')
+    pentry_blacklist = PipeDelimitedStringListParameter(name='pentries', aliases=['pentryblacklist'], description='List of strings to do full match on in /etc/passwd that will result in trigger firing if found')
 
     def evaluate(self, image_obj, context):
         if not context.data.get('passwd_entries'):
@@ -127,8 +133,9 @@ class PEntryMatchTrigger(BaseTrigger, PentryBlacklistMixin):
 
 
 class FileparsePasswordGate(Gate):
-    __gate_name__ = 'fileparse_passwd'
-    __description__ = 'Password File Content Checks'
+    __gate_name__ = 'etc_passwd_content'
+    __aliases__ = ['fileparse_passwd']
+    __description__ = 'Content checks for /etc/passwd'
     __triggers__ = [
         FileNotStoredTrigger,
         UsernameMatchTrigger,

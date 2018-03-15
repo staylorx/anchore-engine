@@ -6,7 +6,7 @@ from anchore_engine.services.policy_engine.engine.policy.gate import Gate, BaseT
 from anchore_engine.services.policy_engine.engine.vulnerabilities import have_vulnerabilities_for
 from anchore_engine.db import DistroNamespace
 from anchore_engine.services.policy_engine.engine.logs import get_logger
-from anchore_engine.services.policy_engine.engine.policy.params import BooleanStringParameter, IntegerStringParameter
+from anchore_engine.services.policy_engine.engine.policy.params import BooleanStringParameter, IntegerStringParameter, EnumCommaDelimStringListParameter
 log = get_logger()
 
 
@@ -24,7 +24,6 @@ class CveSeverityTrigger(BaseTrigger):
         for pkg_vuln in vulns:
             # Filter by level first
             if pkg_vuln.vulnerability.severity in self.__vuln_levels__:
-
                 # Check fix_available status if specified by user in policy
                 if is_fix_available is not None:
                     # Must to a fix_available check
@@ -43,39 +42,45 @@ class CveSeverityTrigger(BaseTrigger):
 
 
 class LowSeverityTrigger(CveSeverityTrigger):
-    __trigger_name__ = 'vulnlow'
+    __trigger_name__ = 'low_severity'
+    __aliases__ = ['vulnlow']
     __description__ = 'triggers if a vulnerability of LOW severity is found, along with a named package'
     __vuln_levels__ = ['Low']
 
 
 class MediumSeverityTrigger(CveSeverityTrigger):
-    __trigger_name__ = 'vulnmedium'
+    __trigger_name__ = 'medium_severity'
+    __aliases__ = ['vulnmedium']
     __description__ = 'triggers if a vulnerability of MEDIUM severity is found, along with a named package'
     __vuln_levels__ = ['Medium']
 
 
 class HighSeverityTrigger(CveSeverityTrigger):
-    __trigger_name__ = 'vulnhigh'
+    __trigger_name__ = 'high_severity'
+    __aliases__ = ['vulnhigh']
     __description__ = 'triggers if a vulnerability of HIGH severity is found, along with a named package'
     __vuln_levels__ = ['High']
 
 
 class CriticalSeverityTrigger(CveSeverityTrigger):
-    __trigger_name__ = 'vulncritical'
+    __trigger_name__ = 'critical_severity'
+    __aliases__ = ['vulncritical']
     __description__ = 'triggers if a vulnerability of CRITICAL severity is found, along with a named package'
     __vuln_levels__ = ['Critical']
 
 
 class UnknownSeverityTrigger(CveSeverityTrigger):
-    __trigger_name__ = 'vulnunknown'
+    __trigger_name__ = 'unknown_severity'
+    __aliases__ = ['vulnunknown']
     __description__ = 'triggers if a vulnerability of UNKNOWN severity is found, along with a named package'
     __vuln_levels__ = ['Unknown', 'Negligible', None]
 
 
 class FeedOutOfDateTrigger(BaseTrigger):
-    __trigger_name__ = 'feedoutofdate'
+    __trigger_name__ = 'stale_feed_data'
+    __aliases__ = ['feedoutofdate']
     __description__ = 'triggers if the CVE data is older than the window specified by the parameter MAXAGE (unit is number of days)'
-    max_age = IntegerStringParameter(name='maxage', description='Fire the trigger if the last sync was more than this number of days ago', is_required=True)
+    max_age = IntegerStringParameter(name='max_days_since_sync', aliases=['maxage'], description='Fire the trigger if the last sync was more than this number of days ago', is_required=True)
 
     def evaluate(self, image_obj, context):
         # Map to a namespace
@@ -116,7 +121,8 @@ class UnsupportedDistroTrigger(BaseTrigger):
 
 
 class AnchoreSecGate(Gate):
-    __gate_name__ = 'anchoresec'
+    __gate_name__ = 'vulnerabilities'
+    __aliases__ = ['anchoresec']
     __description__ = 'CVE/Vulnerability Checks'
     __triggers__ = [
         LowSeverityTrigger,
