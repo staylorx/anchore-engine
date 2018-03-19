@@ -370,36 +370,36 @@ def policy_rule_factory(policy_json, strict_validation=True):
     try:
         rule = ExecutablePolicyRule(policy_json)
     except GateNotFoundError as ex:
-        if not strict_validation and DeprecatedPolicyRule.is_deprecated(policy_json):
-            rule = DeprecatedPolicyRule(policy_json)
+        if not strict_validation and EndOfLifedPolicyRule.is_eoled(policy_json):
+            rule = EndOfLifedPolicyRule(policy_json)
         else:
             raise ex
 
     return rule
 
 
-class DeprecatedPolicyRule(PolicyRule):
-    deprecated_gates = [
+class EndOfLifedPolicyRule(PolicyRule):
+    end_of_lifed_gates = [
         'pkgdiff',
         'suiddiff',
         'base_check'
     ]
 
-    class DeprecatedGate(Gate):
+    class EOLedGate(Gate):
         def prepare_context(self, image_obj, context):
             return context
 
     def __init__(self, policy_json=None):
-        super(DeprecatedPolicyRule, self).__init__(policy_json)
+        super(EndOfLifedPolicyRule, self).__init__(policy_json)
         self.errors.append(DeprecatedGateWarning(self.gate_name))
-        self.gate_cls = DeprecatedPolicyRule.DeprecatedGate
+        self.gate_cls = EndOfLifedPolicyRule.EOLedGate
 
     def execute(self, image_obj, exec_context):
         return self.errors, []
 
     @classmethod
-    def is_deprecated(cls, policy_json):
-        return policy_json.get('gate').lower() in cls.deprecated_gates
+    def is_eoled(cls, policy_json):
+        return policy_json.get('gate').lower() in cls.end_of_lifed_gates
 
 
 class ExecutablePolicyRule(PolicyRule):

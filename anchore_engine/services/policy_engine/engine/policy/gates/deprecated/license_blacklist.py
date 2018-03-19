@@ -1,13 +1,13 @@
 import re
 from anchore_engine.services.policy_engine.engine.policy.gate import Gate, BaseTrigger
 from anchore_engine.services.policy_engine.engine.policy.params import CommaDelimitedStringListParameter
-
+from anchore_engine.services.policy_engine.engine.policy.gates.util import deprecated_operation
 
 class FullMatchTrigger(BaseTrigger):
-    __trigger_name__ = 'blacklist_exact_match'
+    __trigger_name__ = 'licfullmatch'
     __description__ = 'triggers if the evaluated image has a package installed with software distributed under the specified (exact match) license(s)'
 
-    license_blacklist = CommaDelimitedStringListParameter(name='licenses', aliases=['licblacklist_fullmatch'], description='List of license names to blacklist exactly', is_required=True)
+    license_blacklist = CommaDelimitedStringListParameter(name='licblacklist_fullmatch', description='List of license names to blacklist exactly')
 
     def evaluate(self, image_obj, context):
         fullmatchpkgs = []
@@ -22,10 +22,10 @@ class FullMatchTrigger(BaseTrigger):
 
 
 class SubstringMatchTrigger(BaseTrigger):
-    __trigger_name__ = 'blacklist_partial_match'
+    __trigger_name__ = 'licsubmatch'
     __description__ = 'triggers if the evaluated image has a package installed with software distributed under the specified (substring match) license(s)'
 
-    licenseblacklist_submatches = CommaDelimitedStringListParameter(name='licenses', aliases=['licblacklist_submatch'], description='List of strings to do substring match for blacklist', is_required=True)
+    licenseblacklist_submatches = CommaDelimitedStringListParameter(name='licblacklist_submatch', description='List of strings to do substring match for blacklist')
 
     def evaluate(self, image_obj, context):
         matchpkgs = []
@@ -38,12 +38,14 @@ class SubstringMatchTrigger(BaseTrigger):
                     matchpkgs.append(pkg + "(" + license + ")")
 
         if matchpkgs:
-            self._fire(msg='LICSUBMATCH Packages are installed that have blacklisted licenses: ' + ', '.join(matchpkgs))
+            self._fire(
+                msg='LICSUBMATCH Packages are installed that have blacklisted licenses: ' + ', '.join(matchpkgs))
 
 
-class LicensesGate(Gate):
-    __gate_name__ = 'licenses'
-    __description__ = 'License checks and management'
+@deprecated_operation(superceded_by='licenses')
+class LicenseBlacklistGate(Gate):
+    __gate_name__ = 'licblacklist'
+    __description__ = 'Package License Blacklists'
     __triggers__ = [
         FullMatchTrigger,
         SubstringMatchTrigger

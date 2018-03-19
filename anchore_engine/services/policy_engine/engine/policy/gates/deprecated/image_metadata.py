@@ -3,12 +3,13 @@ from anchore_engine.services.policy_engine.engine.policy.gate import BaseTrigger
 from anchore_engine.services.policy_engine.engine.policy.gates.util import CheckOperation
 from anchore_engine.services.policy_engine.engine.policy.params import EnumStringParameter, TypeValidator, TriggerParameter
 from anchore_engine.services.policy_engine.engine.logs import get_logger
+from anchore_engine.services.policy_engine.engine.policy.gates.util import deprecated_operation
 
 log = get_logger()
 
 
 class ImageMetadataAttributeCheckTrigger(BaseTrigger):
-    __trigger_name__ = 'attribute'
+    __trigger_name__ = 'attributecheck'
     __description__ = 'triggers if a named image attribute matches the given condition'
 
     __ops__ = {
@@ -29,16 +30,18 @@ class ImageMetadataAttributeCheckTrigger(BaseTrigger):
     __valid_attributes__ = {
         'size': lambda x: x.size,
         'architecture': lambda x: x.docker_data_json.get('Architecture') if x.docker_data_json else None,
-        'os_type': lambda x: x.docker_data_json.get('Os', x.docker_data_json.get('os')) if x.docker_data_json else None,
+        'os_type': lambda x: x.docker_data_json.get('Os') if x.docker_data_json else None,
         'distro': lambda x: x.distro_name,
         'distro_version': lambda x: x.distro_version,
         'like_distro': lambda x: x.like_distro,
         'layer_count': lambda x: len(x.layers_json) if x.layers_json else 0
     }
 
-    attribute = EnumStringParameter(name='attribute', description='Attribute name to apply as rvalue to the check operation', enum_values=__valid_attributes__.keys(), is_required=True, sort_order=1)
-    check = EnumStringParameter(name='comparison', description='The operation to perform the evaluation', enum_values=__ops__.keys(), is_required=True, sort_order=2)
-    check_value = TriggerParameter(name='compare_to', description='The lvalue in the comparison.', validator=TypeValidator('string'), sort_order=3)
+    __value_validator__ = lambda x: True
+
+    attribute = EnumStringParameter(name='attributes', description='Attribute name to apply as rvalue to the check operation', enum_values=__valid_attributes__.keys(), is_required=True, sort_order=1)
+    check = EnumStringParameter(name='check', description='The operation to perform the evaluation', enum_values=__ops__.keys(), is_required=True, sort_order=2)
+    check_value = TriggerParameter(name='check_value', description='The lvalue in the check operation.', validator=TypeValidator('string'), sort_order=3)
 
     def evaluate(self, image_obj, context):
         attr = self.attribute.value()
@@ -49,7 +52,8 @@ class ImageMetadataAttributeCheckTrigger(BaseTrigger):
             return
 
         op = self.__ops__.get(check)
-        if op is None or op.requires_rvalue and not rval:
+
+        if op and op.requires_rvalue and not rval:
             # Raise exception or fall thru
             return
 
@@ -58,12 +62,12 @@ class ImageMetadataAttributeCheckTrigger(BaseTrigger):
         if type(img_val) in [str, int, float, unicode]:
             rval = type(img_val)(rval)
 
-        if op.eval_function(img_val, rval):
+        if self.__ops__.get(check).eval_function(img_val, rval):
             self._fire(msg="Attribute check for attribute: '{}' check: '{}' check_value: '{}' matched image value: '{}'".format(attr, check, (str(rval) if rval is not None else ''), img_val))
 
-
+@deprecated_operation(superceded_by='image_metadata')
 class ImageMetadataGate(Gate):
-    __gate_name__ = 'image_metadata'
+    __gate_name__ = 'metadatacheck'
     __description__ = 'Check Image Metadata'
 
     __triggers__ = [
