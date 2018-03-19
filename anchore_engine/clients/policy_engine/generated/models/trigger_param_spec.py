@@ -34,6 +34,8 @@ class TriggerParamSpec(object):
         'name': 'str',
         'description': 'str',
         'required': 'bool',
+        'is_deprecated': 'bool',
+        'superceded_by': 'str',
         'validator': 'object'
     }
 
@@ -41,10 +43,12 @@ class TriggerParamSpec(object):
         'name': 'name',
         'description': 'description',
         'required': 'required',
+        'is_deprecated': 'is_deprecated',
+        'superceded_by': 'superceded_by',
         'validator': 'validator'
     }
 
-    def __init__(self, name=None, description=None, required=None, validator=None):
+    def __init__(self, name=None, description=None, required=None, is_deprecated=None, superceded_by=None, validator=None):
         """
         TriggerParamSpec - a model defined in Swagger
         """
@@ -52,6 +56,8 @@ class TriggerParamSpec(object):
         self._name = None
         self._description = None
         self._required = None
+        self._is_deprecated = None
+        self._superceded_by = None
         self._validator = None
 
         if name is not None:
@@ -60,6 +66,10 @@ class TriggerParamSpec(object):
           self.description = description
         if required is not None:
           self.required = required
+        if is_deprecated is not None:
+          self.is_deprecated = is_deprecated
+        if superceded_by is not None:
+          self.superceded_by = superceded_by
         if validator is not None:
           self.validator = validator
 
@@ -129,6 +139,52 @@ class TriggerParamSpec(object):
         """
 
         self._required = required
+
+    @property
+    def is_deprecated(self):
+        """
+        Gets the is_deprecated of this TriggerParamSpec.
+        True if this gate is deprecated
+
+        :return: The is_deprecated of this TriggerParamSpec.
+        :rtype: bool
+        """
+        return self._is_deprecated
+
+    @is_deprecated.setter
+    def is_deprecated(self, is_deprecated):
+        """
+        Sets the is_deprecated of this TriggerParamSpec.
+        True if this gate is deprecated
+
+        :param is_deprecated: The is_deprecated of this TriggerParamSpec.
+        :type: bool
+        """
+
+        self._is_deprecated = is_deprecated
+
+    @property
+    def superceded_by(self):
+        """
+        Gets the superceded_by of this TriggerParamSpec.
+        The name of another gate that supercedes this on functionally if this is deprecated
+
+        :return: The superceded_by of this TriggerParamSpec.
+        :rtype: str
+        """
+        return self._superceded_by
+
+    @superceded_by.setter
+    def superceded_by(self, superceded_by):
+        """
+        Sets the superceded_by of this TriggerParamSpec.
+        The name of another gate that supercedes this on functionally if this is deprecated
+
+        :param superceded_by: The superceded_by of this TriggerParamSpec.
+        :type: str
+        """
+
+        self._superceded_by = superceded_by
 
     @property
     def validator(self):

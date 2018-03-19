@@ -133,8 +133,7 @@ class PEntryMatchTrigger(BaseTrigger, PentryBlacklistMixin):
 
 
 class FileparsePasswordGate(Gate):
-    __gate_name__ = 'etc_passwd_content'
-    __aliases__ = ['fileparse_passwd']
+    __gate_name__ = 'passwd_file'
     __description__ = 'Content checks for /etc/passwd'
     __triggers__ = [
         FileNotStoredTrigger,

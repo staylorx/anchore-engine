@@ -77,10 +77,8 @@ class PolicyBundle(object):
         self.version = version
         if whitelists is not None:
           self.whitelists = whitelists
-        if policies is not None:
-          self.policies = policies
-        if mappings is not None:
-          self.mappings = mappings
+        self.policies = policies
+        self.mappings = mappings
         if whitelisted_images is not None:
           self.whitelisted_images = whitelisted_images
         if blacklisted_images is not None:
@@ -215,6 +213,8 @@ class PolicyBundle(object):
         :param policies: The policies of this PolicyBundle.
         :type: list[Policy]
         """
+        if policies is None:
+            raise ValueError("Invalid value for `policies`, must not be `None`")
 
         self._policies = policies
 
@@ -236,6 +236,8 @@ class PolicyBundle(object):
         :param mappings: The mappings of this PolicyBundle.
         :type: list[MappingRule]
         """
+        if mappings is None:
+            raise ValueError("Invalid value for `mappings`, must not be `None`")
 
         self._mappings = mappings
 

@@ -1636,6 +1636,13 @@ definitions:
       description:
         type: string
         description: Description of the gate
+      is_deprecated:
+        type: boolean
+        description: True if this trigger is deprecated
+      superceded_by:
+        type: string
+        description: The name of another trigger that supercedes this on functionally if this is deprecated
+
       triggers:
         type: array
         description: List of the triggers that can fire for this Gate
@@ -1651,6 +1658,12 @@ definitions:
       description:
         type: string
         description: Trigger description for what it tests and when it will fire during evaluation
+      is_deprecated:
+        type: boolean
+        description: True if this trigger is deprecated
+      superceded_by:
+        type: string
+        description: The name of another trigger that supercedes this on functionally if this is deprecated
       parameters:
         type: array
         description: The list of parameters that are valid for this trigger
@@ -1664,6 +1677,12 @@ definitions:
         description: Parameter name as it appears in policy document
       description:
         type: string
+      is_deprecated:
+        type: boolean
+        description: True if this trigger is deprecated
+      superceded_by:
+        type: string
+        description: The name of another trigger that supercedes this on functionally if this is deprecated
       required:
         description: Is this a required parameter or optional
         type: boolean

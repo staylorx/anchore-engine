@@ -1,10 +1,10 @@
 # coding: utf-8
 
 from __future__ import absolute_import
-from .image_selection_rule import ImageSelectionRule
-from .mapping_rule import MappingRule
-from .policy import Policy
-from .whitelist import Whitelist
+from anchore_engine.services.policy_engine.api.models.image_selection_rule import ImageSelectionRule
+from anchore_engine.services.policy_engine.api.models.mapping_rule import MappingRule
+from anchore_engine.services.policy_engine.api.models.policy import Policy
+from anchore_engine.services.policy_engine.api.models.whitelist import Whitelist
 from .base_model_ import Model
 from datetime import date, datetime
 from typing import List, Dict
@@ -214,6 +214,8 @@ class PolicyBundle(Model):
         :param policies: The policies of this PolicyBundle.
         :type policies: List[Policy]
         """
+        if policies is None:
+            raise ValueError("Invalid value for `policies`, must not be `None`")
 
         self._policies = policies
 
@@ -235,6 +237,8 @@ class PolicyBundle(Model):
         :param mappings: The mappings of this PolicyBundle.
         :type mappings: List[MappingRule]
         """
+        if mappings is None:
+            raise ValueError("Invalid value for `mappings`, must not be `None`")
 
         self._mappings = mappings
 

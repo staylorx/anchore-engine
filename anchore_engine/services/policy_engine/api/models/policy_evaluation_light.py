@@ -1,9 +1,9 @@
 # coding: utf-8
 
 from __future__ import absolute_import
-from .policy import Policy
-from .policy_evaluation_problem import PolicyEvaluationProblem
-from .whitelist import Whitelist
+from anchore_engine.services.policy_engine.api.models.policy import Policy
+from anchore_engine.services.policy_engine.api.models.policy_evaluation_problem import PolicyEvaluationProblem
+from anchore_engine.services.policy_engine.api.models.whitelist import Whitelist
 from .base_model_ import Model
 from datetime import date, datetime
 from typing import List, Dict

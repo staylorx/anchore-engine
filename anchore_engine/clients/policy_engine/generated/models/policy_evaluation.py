@@ -87,8 +87,7 @@ class PolicyEvaluation(object):
         self.tag = tag
         self.bundle = bundle
         self.matched_mapping_rule = matched_mapping_rule
-        if matched_whitelisted_images_rule is not None:
-          self.matched_whitelisted_images_rule = matched_whitelisted_images_rule
+        self.matched_whitelisted_images_rule = matched_whitelisted_images_rule
         self.matched_blacklisted_images_rule = matched_blacklisted_images_rule
         self.result = result
         if created_at is not None:
@@ -239,6 +238,8 @@ class PolicyEvaluation(object):
         :param matched_whitelisted_images_rule: The matched_whitelisted_images_rule of this PolicyEvaluation.
         :type: object
         """
+        if matched_whitelisted_images_rule is None:
+            raise ValueError("Invalid value for `matched_whitelisted_images_rule`, must not be `None`")
 
         self._matched_whitelisted_images_rule = matched_whitelisted_images_rule
 

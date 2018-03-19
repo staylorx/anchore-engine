@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from __future__ import absolute_import
-from .policy_rule import PolicyRule
+from anchore_engine.services.policy_engine.api.models.policy_rule import PolicyRule
 from .base_model_ import Model
 from datetime import date, datetime
 from typing import List, Dict

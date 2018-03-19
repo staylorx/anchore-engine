@@ -485,12 +485,30 @@ def describe_policy():
             g.name = name
             g.description = v.__description__ if v.__description__ else ''
             g.triggers = []
+            if hasattr(v, '__superceded_by__'):
+                g.superceded_by = v.__superceded_by__
+            else:
+                g.superceded_by = None
+
+            if hasattr(v, '__is_deprecated__'):
+                g.is_deprecated = v.__is_deprecated__
+            else:
+                g.is_deprecated = False
 
             for t in v.__triggers__:
                 tr = TriggerSpec()
                 tr.name = t.__trigger_name__
                 tr.description = t.__description__ if t.__description__ else ''
                 tr.parameters = []
+                if hasattr(t, '__superceded_by__'):
+                    tr.superceded_by = t.__superceded_by__
+                else:
+                    tr.superceded_by = None
+                if hasattr(t, '__is_deprecated__'):
+                    tr.is_deprecated = t.__is_deprecated__
+                else:
+                    tr.is_deprecated = False
+
                 params = t._parameters()
                 if params:
                     param_list = sorted(params.values(), key=lambda x: x.sort_order)
@@ -500,6 +518,16 @@ def describe_policy():
                         tps.description = param.description
                         tps.validator = param.validator.json()
                         tps.required = param.required
+                        if hasattr(param, '__superceded_by__'):
+                            tps.superceded_by = param.__superceded_by__
+                        else:
+                            tps.superceded_by = None
+
+                        if hasattr(param, '__is_deprecated__'):
+                            tps.is_deprecated = param.__is_deprecated__
+                        else:
+                            tps.is_deprecated = False
+
                         tr.parameters.append(tps)
 
                 g.triggers.append(tr)

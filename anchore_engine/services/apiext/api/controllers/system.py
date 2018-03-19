@@ -6,8 +6,7 @@ import datetime
 # anchore modules
 from anchore_engine.clients import catalog, simplequeue, policy_engine
 import anchore_engine.services.common
-from anchore_engine.subsys import logger
-from anchore_engine.services.common import apiext_status
+
 
 def make_response_service(user_auth, service_record, params):
     ret = {}

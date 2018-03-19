@@ -33,28 +33,38 @@ class GateSpec(object):
     swagger_types = {
         'name': 'str',
         'description': 'str',
+        'is_deprecated': 'bool',
+        'superceded_by': 'str',
         'triggers': 'list[TriggerSpec]'
     }
 
     attribute_map = {
         'name': 'name',
         'description': 'description',
+        'is_deprecated': 'is_deprecated',
+        'superceded_by': 'superceded_by',
         'triggers': 'triggers'
     }
 
-    def __init__(self, name=None, description=None, triggers=None):
+    def __init__(self, name=None, description=None, is_deprecated=None, superceded_by=None, triggers=None):
         """
         GateSpec - a model defined in Swagger
         """
 
         self._name = None
         self._description = None
+        self._is_deprecated = None
+        self._superceded_by = None
         self._triggers = None
 
         if name is not None:
           self.name = name
         if description is not None:
           self.description = description
+        if is_deprecated is not None:
+          self.is_deprecated = is_deprecated
+        if superceded_by is not None:
+          self.superceded_by = superceded_by
         if triggers is not None:
           self.triggers = triggers
 
@@ -103,6 +113,52 @@ class GateSpec(object):
         """
 
         self._description = description
+
+    @property
+    def is_deprecated(self):
+        """
+        Gets the is_deprecated of this GateSpec.
+        True if this gate is deprecated
+
+        :return: The is_deprecated of this GateSpec.
+        :rtype: bool
+        """
+        return self._is_deprecated
+
+    @is_deprecated.setter
+    def is_deprecated(self, is_deprecated):
+        """
+        Sets the is_deprecated of this GateSpec.
+        True if this gate is deprecated
+
+        :param is_deprecated: The is_deprecated of this GateSpec.
+        :type: bool
+        """
+
+        self._is_deprecated = is_deprecated
+
+    @property
+    def superceded_by(self):
+        """
+        Gets the superceded_by of this GateSpec.
+        The name of another gate that supercedes this on functionally if this is deprecated
+
+        :return: The superceded_by of this GateSpec.
+        :rtype: str
+        """
+        return self._superceded_by
+
+    @superceded_by.setter
+    def superceded_by(self, superceded_by):
+        """
+        Sets the superceded_by of this GateSpec.
+        The name of another gate that supercedes this on functionally if this is deprecated
+
+        :param superceded_by: The superceded_by of this GateSpec.
+        :type: str
+        """
+
+        self._superceded_by = superceded_by
 
     @property
     def triggers(self):
