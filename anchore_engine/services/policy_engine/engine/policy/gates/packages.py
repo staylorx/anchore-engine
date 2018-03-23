@@ -1,7 +1,7 @@
 import enum
 from anchore_engine.services.policy_engine.engine.policy.gate import BaseTrigger, Gate
 from anchore_engine.services.policy_engine.engine.policy.params import NameVersionStringListParameter, \
-    CommaDelimitedStringListParameter
+    CommaDelimitedStringListParameter, EnumCommaDelimStringListParameter, EnumStringParameter, TypeValidator, TriggerParameter
 from anchore_engine.db import ImagePackage, ImagePackageManifestEntry
 from anchore_engine.services.policy_engine.engine.util.packages import compare_package_versions
 from anchore_engine.services.policy_engine.engine.logs import get_logger
@@ -11,11 +11,11 @@ log = get_logger()
 
 class VerifyTrigger(BaseTrigger):
     __trigger_name__ = 'verify'
-    __description__ = 'Check package integrity against package db in in the image. Triggers for changes or removal or content in all or the selected DIRS param if provided, and can filter type of check with the CHECK_ONLY param'
+    __description__ = 'Check package integrity against package db in in the image. Triggers for changes or removal or content in all or the selected "dirs" parameter if provided, and can filter type of check with the "check_only" parameter'
 
-    pkgs = CommaDelimitedStringListParameter(name='packages', aliases=['pkgs'], description='List of package names to limit verification', is_required=False)
-    directories = CommaDelimitedStringListParameter(name='directories', aliases=['dirs'], description='List of directories to limit checks to so as to avoid checks on all dir', is_required=False)
-    check_only = CommaDelimitedStringListParameter(name='checks', aliases=['check_only'], description='List of types of checks to perform instead of all', is_required=False)
+    pkgs = CommaDelimitedStringListParameter(name='only_packages', example_str='"libssl,openssl"', description='List of package names to limit verification', is_required=False, sort_order=1)
+    directories = CommaDelimitedStringListParameter(name='only_directories', example_str='"/usr,/var/lib"', description='List of directories to limit checks to so as to avoid checks on all dir', is_required=False, sort_order=2)
+    check_only = EnumStringParameter(name='check', enum_values=['changed', 'missing'], example_str='"changed"', description='Check to perform instead of all', is_required=False, sort_order=3)
 
     analyzer_type = 'base'
     analyzer_id = 'file_package_verify'
@@ -28,7 +28,7 @@ class VerifyTrigger(BaseTrigger):
     def evaluate(self, image_obj, context):
         pkg_names = self.pkgs.value(default_if_none=[])
         pkg_dirs = self.directories.value(default_if_none=[])
-        checks = self.check_only.value(default_if_none=[])
+        checks = [self.check_only.value(default_if_none=None)]
 
         if image_obj.fs:
             extracted_files_json = image_obj.fs.files
@@ -132,22 +132,33 @@ class VerifyTrigger(BaseTrigger):
 
 
 class PkgNotPresentTrigger(BaseTrigger):
-    __trigger_name__ = 'required'
-    __aliases__ = ['pkgnotpresent']
-    __description__ = 'Triggers if the package(s) specified in the params are not installed in the container image. The parameters specify different types of matches.',
+    __trigger_name__ = 'require'
+    __description__ = 'Triggers if the package specified in the params are not installed in the container image. The name is not optional but the version and min_version values are optional to extend match logic'
 
-    pkg_full_match = NameVersionStringListParameter(name='names_and_versions', aliases=['pkgfullmatch'], description='Match these values on both name and exact version. Entries are comma-delimited with a pipe between pkg name and version. E.g. "pkg1|version1,pkg2|version2"', is_required=False)
-    pkg_name_match = CommaDelimitedStringListParameter(name='names', aliases=['pkgnamematch'], description='List of names to match', is_required=False)
-    pkg_version_match = NameVersionStringListParameter(name='version_less_than', aliases=['pkgversmatch'], description='Names and versions to do a minimum-version check on. Any package in the list with a version less than the specified version will cause the trigger to fire', is_required=False)
+    pkg_name = TriggerParameter(name='name', example_str='"libssl"', description='Name of package that must be found installed in image', is_required=True, validator=TypeValidator('string'), sort_order=1)
+    pkg_version = TriggerParameter(name='version', example_str='"1.10.3rc3"', description='Version of package for exact version match', is_required=False, validator=TypeValidator('string'), sort_order=2)
+    min_version = TriggerParameter(name='minimum_version', example_str='"0.0.9b"', description='Minimum version that must be installed. Trigger fires if none or older version found.', is_required=False, validator=TypeValidator('string'), sort_order=3)
 
     def evaluate(self, image_obj, context):
-        fullmatch = self.pkg_full_match.value(default_if_none={})
-        namematch = self.pkg_name_match.value(default_if_none=[])
-        vermatch = self.pkg_version_match.value(default_if_none={})
+        name = self.pkg_name.value()
+        version = self.pkg_version.value()
+        min_version = self.min_version.value()
 
-        names = set(fullmatch.keys()).union(set(namematch)).union(set(vermatch.keys()))
-        if not names:
-            return
+        if not name:
+            names = []
+            fullmatch = {}
+            namematch = []
+            vermatch = {}
+
+        else:
+            names = [name]
+            if version:
+                fullmatch = {name: version}
+            else:
+                fullmatch = {}
+
+            if min_version:
+                vermatch = {name: min_version}
 
         # Filter is possible since the lazy='dynamic' is set on the packages relationship in Image.
         for img_pkg in image_obj.packages.filter(ImagePackage.name.in_(names)).all():
@@ -188,50 +199,36 @@ class PkgNotPresentTrigger(BaseTrigger):
             self._fire(msg="PKGNOTPRESENT input package (" + str(pkg) + ") is not present in container image")
 
 
-class BlackListFullMatchTrigger(BaseTrigger):
-    __aliases__ = ['pkgfullmatch']
-    __trigger_name__ = 'blacklist_name_version'
-    __description__ = 'triggers if the evaluated image has a package installed that matches one in the list given as a param (package_name|vers)'
-    fullmatch_blacklist = NameVersionStringListParameter(name='name_version_list', aliases=['blacklist_fullmatch'], description='List of package name|version pairs for exact match')
+class BlackListTrigger(BaseTrigger):
+    __trigger_name__ = 'blacklist'
+    __description__ = 'triggers if the evaluated image has a package installed that matches the named package optionally with a specific version as well'
+
+    pkg_name = TriggerParameter(name='name', example_str='"openssh-server"', description="Package name to blacklist", sort_order=1, validator=TypeValidator('string'), is_required=True)
+    pkg_version = TriggerParameter(name='version', example_str='"1.0.1"', description='Specific version of package to blacklist', validator=TypeValidator('string'), sort_order=2, is_required=False)
 
     def evaluate(self, image_obj, context):
-        pkgs = self.fullmatch_blacklist.value() if self.fullmatch_blacklist.value() else []
+        pkg = self.pkg_name.value()
+        vers = self.pkg_version.value()
 
-        for pkg, vers in pkgs.items():
-            try:
+        try:
+            if vers:
                 matches = image_obj.packages.filter(ImagePackage.name == pkg, ImagePackage.version == vers)
                 for m in matches:
-                    self._fire(msg='PKGFULLMATCH Package is blacklisted: ' + m.name + "-" + m.version)
-            except Exception as e:
-                log.exception('Error filtering packages for full match')
-                pass
-
-
-class BlacklistNameMatchTrigger(BaseTrigger):
-    __aliases__ = ['pkgnamematch']
-    __trigger_name__ = 'blacklist_name_only'
-    __description__ = 'triggers if the evaluated image has a package installed that matches one in the list given as a param (package_name)'
-    namematch_blacklist = CommaDelimitedStringListParameter(name='names', aliases=['blacklist_namematch'], description='List of package names to be blacklisted')
-
-    def evaluate(self, image_obj, context):
-        pkg_names = self.namematch_blacklist.value() if self.namematch_blacklist.value() else []
-
-        for pval in pkg_names:
-            try:
-                for pkg in image_obj.packages.filter(ImagePackage.name == pval):
-                    self._fire(msg='PKGNAMEMATCH Package is blacklisted: ' + pkg.name)
-            except Exception as e:
-                log.exception('Error searching packages for blacklisted names')
-                pass
+                    self._fire(msg='Package is blacklisted: ' + m.name + "-" + m.version)
+            else:
+                matches = image_obj.packages.filter(ImagePackage.name == pkg)
+                for m in matches:
+                    self._fire(msg='Package is blacklisted: ' + m.name)
+        except Exception as e:
+            log.exception('Error filtering packages for full match')
+            pass
 
 
 class PackagesCheckGate(Gate):
     __gate_name__ = 'packages'
-    __aliases__ = ['pkgcheck','pkgblacklist']
     __description__ = 'Distro package checks'
     __triggers__ = [
         PkgNotPresentTrigger,
         VerifyTrigger,
-        BlackListFullMatchTrigger,
-        BlacklistNameMatchTrigger
+        BlackListTrigger,
     ]

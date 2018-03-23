@@ -64,7 +64,7 @@ class ParameterizedDockerfileModeBaseTrigger(BaseTrigger):
     Base class for any trigger that lets the user decide if it applies to only actual dockerfiles or not
     """
 
-    actual_dockerfile_only = BooleanStringParameter('actual_dockerfile_only', description='Only evaluate against a user-provided dockerfile, skip inferred/guessed. Default is False', is_required=False)
+    actual_dockerfile_only = BooleanStringParameter('actual_dockerfile_only', example_str='true', description='Only evaluate against a user-provided dockerfile, skip inferred/guessed. Default is False', is_required=False)
 
     def evaluate(self, image_obj, context):
         if not hasattr(context, 'data') or not context.data.get('prepared_dockerfile'):
@@ -82,8 +82,8 @@ class EffectiveUserTrigger(DockerfileModeCheckedBaseTrigger):
     __trigger_name__ = 'effective_user'
     __description__ = 'Triggers if the effective user for the container is either root when not allowed or is not in a whitelist'
 
-    user = TriggerParameter(name='user', description='List of user names allowed to be the effective user (last user entry) in the images history', is_required=True, validator=TypeValidator('string'))
-    allowed = BooleanStringParameter(name='is_allowed', is_required=True)
+    user = CommaDelimitedStringListParameter(name='users', example_str='root,docker', description='User names to check against as the effective user (last user entry) in the images history', is_required=True, validator=TypeValidator('string'), sort_order=1)
+    allowed = BooleanStringParameter(name='allowed', is_required=True, sort_order=2)
 
     _sanitize_regex = '\s*USER\s+\[?([^\]]+)\]?\s*'
 
@@ -113,11 +113,11 @@ class EffectiveUserTrigger(DockerfileModeCheckedBaseTrigger):
 
 class InstructionCheckTrigger(ParameterizedDockerfileModeBaseTrigger):
     __trigger_name__ = 'instruction'
-    __description__ = 'Triggers if any directives in the list are found to match the described condition in the dockerfile'
+    __description__ = 'Triggers if any directives in the list are found to match the described condition in the dockerfile. For example: "instruction":"from", "check": "=", "value": "scratch", would fire for images built from scratch'
 
-    instruction = EnumStringParameter(name='instruction', description='The Dockerfile instruction to check', enum_values=DIRECTIVES, is_required=True, related_to='check', sort_order=1)
-    operator = EnumStringParameter(name='operator', description='The type of check to perform', enum_values=CONDITIONS, is_required=True, related_to='directive, check_value', sort_order=2)
-    compare_to = TriggerParameter(name='compare_to', description='The value to check the dockerfile instruction against', is_required=False, related_to='directive, check', validator=TypeValidator("string"), sort_order=3)
+    instruction = EnumStringParameter(name='instruction', example_str='"from"', description='The Dockerfile instruction to check', enum_values=DIRECTIVES, is_required=True, related_to='check', sort_order=1)
+    operator = EnumStringParameter(name='check', example_str='"="', description='The type of check to perform', enum_values=CONDITIONS, is_required=True, related_to='directive, check_value', sort_order=2)
+    compare_to = TriggerParameter(name='value', example_str='"scratch"', description='The value to check the dockerfile instruction against', is_required=False, related_to='directive, check', validator=TypeValidator("string"), sort_order=3)
 
     _operations_requiring_check_val = [
         '=', '!=', 'like', 'not_like', 'in', 'not_in'
@@ -137,8 +137,11 @@ class InstructionCheckTrigger(ParameterizedDockerfileModeBaseTrigger):
     def _evaluate(self, image_obj, context):
         directive = self.instruction.value() # Note: change from multiple values to a single value
         condition = self.operator.value(default_if_none='')
-        check_value = self.compare_to.value(default_if_none=[])
+        check_value = self.compare_to.value()
         operation = self.ops.get(condition)
+
+        if condition in self._operations_requiring_check_val and check_value is None:
+            return
 
         if not condition or not directive:
             return
@@ -158,14 +161,13 @@ class InstructionCheckTrigger(ParameterizedDockerfileModeBaseTrigger):
 
 class ExposedPortsTrigger(ParameterizedDockerfileModeBaseTrigger):
     __trigger_name__ = 'exposed_ports'
+    __description__ = 'Evaluates on the set of ports found to be exposed in the dockerfile or docker layer history. Allows configuring whitelist or blacklist behavior. If allowed=True then any ports found exposed that are not in the list will cause the trigger to fire. If allowed=False than any ports exposed that are in the list will cause the trigger to fire.'
 
-    ports = CommaDelimitedNumberListParameter(name='ports', description='Comma delimited list of port numbers that will cause the trigger to fire', is_required=False)
-    access = EnumStringParameter(name='action', enum_values=['allow', 'deny'], description='Whether to trigger on matches or non-matches')
-
-    __description__ = 'triggers on found EXPOSE lines in the dockerfile/history that define ports that match'
+    ports = CommaDelimitedNumberListParameter(name='ports', example_str='"80,8080,8088"', description='List of port numbers that will cause the trigger to fire', is_required=True, sort_order=1)
+    allowed = BooleanStringParameter(name='allowed', example_str='"false"', description='Whether to trigger on matches or non-matches', is_required=True, sort_order=2)
 
     def _evaluate(self, image_obj, context):
-        if self.access.value() == 'allow':
+        if self.allowed.value():
             allowed_ports = [str(x) for x in self.ports.value(default_if_none=[])]
             denied_ports = []
         else:
@@ -226,7 +228,7 @@ class ExposedPortsTrigger(ParameterizedDockerfileModeBaseTrigger):
 
 class NoDockerfile(BaseTrigger):
     __trigger_name__ = 'not_provided'
-    __description__ = 'Triggers if anchore analysis was performed without supplying a real Dockerfile'
+    __description__ = 'Triggers if anchore analysis was performed without supplying the actual image Dockerfile. Checks if the dockerfile mode is "actual" or "guessed", and is related to the "actual_dockerfile_only" paramter available in other triggers in its behavior'
     __msg__ = 'Image was not analyzed with an actual Dockerfile'
 
     def evaluate(self, image_obj, context):
@@ -239,7 +241,7 @@ class NoDockerfile(BaseTrigger):
 
 class DockerfileGate(Gate):
     __gate_name__ = 'dockerfile'
-    __description__ = 'Check Dockerfile Instructions'
+    __description__ = 'Checks against the content of a dockerfile if provided, or a guessed dockerfile based on docker layer history if the actual dockerfile is not provided at analysis time. The "actual_dockerfile_only" parameter in this gates triggers let you toggle the match behavior'
     __triggers__ = [
         InstructionCheckTrigger,
         EffectiveUserTrigger,
@@ -253,7 +255,7 @@ class DockerfileGate(Gate):
         Leaves the context with a dictionary of dockerfile lines by directive.
         e.g. 
         context.data['dockerfile']['RUN'] = ['RUN apt-get update', 'RUN blah']
-        context.data['dockerfile']['VOLUME'] = ['VOLUME /tmp', 'VOLUMN /var/log']
+        context.data['dockerfile']['VOLUME'] = ['VOLUME /tmp', 'VOLUME /var/log']
         
         :return: updated context
         """
@@ -278,7 +280,7 @@ class DockerfileGate(Gate):
                     else:
                         linebuf = linebuf + line
                         if linebuf:
-                            directive,remainder = linebuf.split(' ', 1)
+                            directive, remainder = linebuf.split(' ', 1)
                             directive = directive.upper()
                             if directive not in context.data['prepared_dockerfile']:
                                 context.data['prepared_dockerfile'][directive] = []

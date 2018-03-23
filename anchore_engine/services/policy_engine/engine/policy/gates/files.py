@@ -9,10 +9,10 @@ log = get_logger()
 
 class ContentMatchTrigger(BaseTrigger):
     __trigger_name__ = 'content_regex_match'
-    __description__ = 'Triggers if the content search analyzer has found any matches.  If the parameter is set, then will only trigger against found matches that are also in the FILECHECK_CONTENTMATCH parameter list.  If the parameter is absent or blank, then the trigger will fire if the analyzer found any matches.'
+    __description__ = 'Triggers for each file where the content search analyzer has found a match. If the parameter is set, the trigger will only fire for files that matched the named regex. Refer to your analyzer configs for the regex names.'
 
-    regex_name = TriggerParameter(validator=TypeValidator('string'), name='regex_name', description='Name of regex from the FILECHECK_CONTENTMATCH parameter list in analyzer configuration',
-                                  is_required=True)
+    regex_name = TriggerParameter(validator=TypeValidator('string'), name='regex_name', example_str='"example_username_regex"', description='Name of regex from the FILECHECK_CONTENTMATCH analyzer parameter in analyzer configuration to limit the check to. If set, will only fire trigger when the specific named regex was found in a file.',
+                                  is_required=False)
 
     def evaluate(self, image_obj, context):
         match_filter = self.regex_name.value()
@@ -43,13 +43,13 @@ class ContentMatchTrigger(BaseTrigger):
 
 class FilenameMatchTrigger(BaseTrigger):
     __trigger_name__ = 'name_match'
-    __description__ = 'Triggers if a file exists in the container that has a filename that matches the regex'
+    __description__ = 'Triggers if a file exists in the container that has a filename that matches the provided regex. This does have a performance impact on policy evaluation.'
 
-    regex = TriggerParameter(validator=TypeValidator('string'), name='regex_name', description='Regex to apply to file names for match', is_required=True)
+    regex = TriggerParameter(validator=TypeValidator('string'), name='regex', example_str='".*\.pem"', description='Regex to apply to file names for match', is_required=True)
 
     def evaluate(self, image_obj, context):
         # decode the param regexes from b64
-        regex_param = self.regex.value().decode('string_escape')
+        regex_param = self.regex.value()
 
         files = []
         if hasattr(context, 'data'):
@@ -80,7 +80,7 @@ class SuidCheckTrigger(BaseTrigger):
 
 class FileCheckGate(Gate):
     __gate_name__ = 'files'
-    __description__ = 'Image File Checks'
+    __description__ = 'Checks against files in the analyzed image including file content, file names, and filesystem attributes'
     __triggers__ = [
         ContentMatchTrigger,
         FilenameMatchTrigger,

@@ -1,7 +1,7 @@
 from test.services.policy_engine.engine.policy.gates import GateUnitTest
 from anchore_engine.services.policy_engine.engine.policy.gate import ExecutionContext
 from anchore_engine.db import get_thread_scoped_session, Image
-from anchore_engine.services.policy_engine.engine.policy.gates.npms import NpmCheckGate, NotOfficialTrigger, NotLatestTrigger, NoFeedTrigger, BadVersionTrigger, PkgFullMatchTrigger, PkgNameMatchTrigger
+from anchore_engine.services.policy_engine.engine.policy.gates.npms import NpmCheckGate, NotOfficialTrigger, NotLatestTrigger, NoFeedTrigger, BadVersionTrigger, PkgMatchTrigger, PkgNameMatchTrigger
 
 
 class NpmCheckGateTest(GateUnitTest):
@@ -53,7 +53,7 @@ class NpmCheckGateTest(GateUnitTest):
         self.assertGreaterEqual(len(t.fired), 0)
 
     def test_pkgfullmatch(self):
-        t, gate, test_context = self.get_initialized_trigger(PkgFullMatchTrigger.__trigger_name__, blacklist_npmfullmatch='abbrev|1.1.0,ajv|4.11.8,blarg|1.0')
+        t, gate, test_context = self.get_initialized_trigger(PkgMatchTrigger.__trigger_name__, blacklist_npmfullmatch='abbrev|1.1.0,ajv|4.11.8,blarg|1.0')
         db = get_thread_scoped_session()
         db.refresh(self.test_image)
         test_context = gate.prepare_context(self.test_image, test_context)

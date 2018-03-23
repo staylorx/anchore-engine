@@ -881,7 +881,7 @@ definitions:
       description:
         type: string
       required:
-        description: Is this a required parameter or optional
+        description: Is this a required parameter or optional. If required it must be present in the json and validate based on the provided validator. If optional it can be present in json and null or omitted.
         type: boolean
       is_deprecated:
         type: boolean

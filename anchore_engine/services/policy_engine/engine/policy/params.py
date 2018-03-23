@@ -76,7 +76,7 @@ class TypeValidator(JsonSchemaValidator):
     Validates the input against a specific python type: str, int, etc.
 
     """
-    __validator_description__ = 'Must match a specific type'
+    __validator_description__ = 'A single value of a basic json type: {}'
     __validator_type__ = 'type'
     __json_types__ = ["null", "boolean", "object", "array", "number", "string", "integer"]
 
@@ -93,6 +93,7 @@ class TypeValidator(JsonSchemaValidator):
 
         self.expected_type = expected_type
         self.validation_schema['type'] = self.expected_type
+        self.__validator_description__ = TypeValidator.__validator_description__.format(self.expected_type)
 
 
 class BooleanStringValidator(JsonSchemaValidator):
@@ -280,7 +281,7 @@ class TriggerParameter(object):
     # Optional class-level validator if it does not require instance-specific configuration
     __validator__ = None
 
-    def __init__(self, name, description=None, is_required=False, related_to=None, validator=None, **kwargs):
+    def __init__(self, name, description=None, is_required=False, related_to=None, validator=None, example_str=None, **kwargs):
         """
 
         :param name: The name to use for the parameter, will be matched and displayed in docs (converted to lower-case for comparisons)
@@ -294,8 +295,9 @@ class TriggerParameter(object):
         self.required = is_required
         self.related_params = related_to
         self._param_value = None
-        self.sort_order = kwargs.get('sort_order', -1)
+        self.sort_order = kwargs.get('sort_order', 100)
         self.aliases = kwargs.get('aliases', [])
+        self.example = example_str
 
         if validator:
             self.validator = validator

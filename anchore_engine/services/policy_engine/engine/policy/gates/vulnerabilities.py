@@ -33,7 +33,7 @@ class AttributeTrigger(BaseTrigger):
         '>=': lambda x, y: x >= y
     }
 
-    package_type = EnumStringParameter(name='package_type', enum_values=['binary', 'source', 'all'], description='Only trigger for specific package type.', is_required=True)
+    package_type = EnumStringParameter(name='package_type', enum_values=['binary', 'all'], description='Only trigger for specific package type.', is_required=True)
     severity = EnumStringParameter(name='severity', description='Severity to compare against', enum_values=SEVERITY_ORDERING, is_required=True, sort_order=1)
     severity_comparison = EnumStringParameter(name='severity_comparison', description='The type of comparison to perform for severity evaluation', enum_values=SEVERITY_COMPARISONS.keys(), is_required=True, related_to='directive, check_value', sort_order=2)
     fix_available = BooleanStringParameter(name='fix_available', description='If present, the fix availability for the CVE record must match the value of this parameter.', is_required=False, sort_order=3)

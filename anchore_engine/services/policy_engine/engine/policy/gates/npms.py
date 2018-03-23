@@ -1,5 +1,5 @@
 from anchore_engine.services.policy_engine.engine.policy.gate import Gate, BaseTrigger
-from anchore_engine.services.policy_engine.engine.policy.params import NameVersionStringListParameter, CommaDelimitedStringListParameter
+from anchore_engine.services.policy_engine.engine.policy.params import TypeValidator, TriggerParameter
 from anchore_engine.db import NpmMetadata
 from anchore_engine.services.policy_engine.engine.logs import get_logger
 from anchore_engine.services.policy_engine.engine.feeds import DataFeeds
@@ -15,8 +15,7 @@ NPM_MATCH_KEY = 'matched_feed_npms'
 
 class NotLatestTrigger(BaseTrigger):
     __trigger_name__ = 'newer_version_in_feed'
-    __aliases__ = ['npmnotlatest']
-    __description__ = 'triggers if an installed NPM is not the latest version according to NPM data feed'
+    __description__ = 'Triggers if an installed NPM is not the latest version according to NPM data feed'
 
     def evaluate(self, image_obj, context):
         """
@@ -43,8 +42,7 @@ class NotLatestTrigger(BaseTrigger):
 
 class NotOfficialTrigger(BaseTrigger):
     __trigger_name__ = 'unknown_in_feeds'
-    __aliases__ = ['npmnotofficial']
-    __description__ = 'triggers if an installed NPM is not in the official NPM database, according to NPM data feed'
+    __description__ = 'Triggers if an installed NPM is not in the official NPM database, according to NPM data feed'
 
     def evaluate(self, image_obj, context):
         """
@@ -72,8 +70,7 @@ class NotOfficialTrigger(BaseTrigger):
 
 class BadVersionTrigger(BaseTrigger):
     __trigger_name__ = 'version_not_in_feeds'
-    __aliases__ = ['npmbadversion']
-    __description__ = 'triggers if an installed NPM version is not listed in the official NPM feed as a valid version'
+    __description__ = 'Triggers if an installed NPM version is not listed in the official NPM feed as a valid version'
 
     def evaluate(self, image_obj, context):
         """
@@ -102,12 +99,12 @@ class BadVersionTrigger(BaseTrigger):
                 self._fire(msg="NPMBADVERSION Package ("+npm+") version ("+v+") installed but version is not in the official feed for this package ("+str(feed_names.get(npm, '')) + ")")
 
 
-class PkgFullMatchTrigger(BaseTrigger):
+class PkgMatchTrigger(BaseTrigger):
     __trigger_name__ = 'blacklisted_name_version'
-    __aliases__ = ['npmpkgfullmatch']
-    __description__ = 'triggers if the evaluated image has an NPM package installed that matches one in the list given as a param (package_name|vers)'
+    __description__ = 'Triggers if the evaluated image has an NPM package installed that matches the name and optionally a version specified in the parameters'
 
-    blacklist_names = NameVersionStringListParameter(name='names_versions', aliases=['blacklist_npmfullmatch'], description='List of name|version matches for full package match on blacklist')
+    name = TriggerParameter(validator=TypeValidator('string'), name='name', is_required=True, description='npm package name to blacklist', example_str='"time_diff"', sort_order=1)
+    version = TriggerParameter(validator=TypeValidator('string'), name='version', is_required=False, description='npm package version to blacklist specifically', example_str='"0.2.9"', sort_order=2)
 
     def evaluate(self, image_obj, context):
         """
@@ -124,42 +121,19 @@ class PkgFullMatchTrigger(BaseTrigger):
         if not pkgs:
             return
 
-        match_versions = self.blacklist_names.value() if self.blacklist_names.value() else {}
-        for pkg, vers in match_versions.items():
-            try:
-                if pkg in pkgs and vers in pkgs.get(pkg, []):
-                    self._fire(msg='NPMPKGFULLMATCH Package is blacklisted: '+pkg+"-"+vers)
-            except Exception as e:
-                continue
+        name = self.name.value()
+        version = self.version.value(default_if_none=None)
 
-
-class PkgNameMatchTrigger(BaseTrigger):
-    __trigger_name__ = 'blacklisted_names'
-    __alises__ = ['npmpkgnamematch']
-    __description__ = 'triggers if the evaluated image has an NPM package installed that matches one in the list given as a param (package_name)'
-
-    npmname_blacklist = CommaDelimitedStringListParameter(name='names', aliases=['blacklist_npmnamematch'], description='List of name strings to blacklist npm package names against')
-
-    def evaluate(self, image_obj, context):
-        npms = image_obj.npms
-        if not npms:
-            return
-
-        pkgs = context.data.get(NPM_LISTING_KEY)
-        if not pkgs:
-            return
-
-        match_names = self.npmname_blacklist.value() if self.npmname_blacklist.value() else []
-
-        for match_val in match_names:
-            if match_val and match_val in pkgs:
-                self._fire(msg='NPMPKGNAMEMATCH Package is blacklisted: ' + match_val)
+        if name in pkgs:
+            if version and version in pkgs.get(name, []):
+                self._fire(msg='NPM Package is blacklisted: ' + name + "-" + version)
+            elif version is None:
+                self._fire(msg='NPM Package is blacklisted: ' + name)
 
 
 class NoFeedTrigger(BaseTrigger):
     __trigger_name__ = 'feed_data_unavailable'
-    __aliases__ = ['npmnofeed']
-    __description__ = 'triggers if anchore does not have access to the NPM data feed'
+    __description__ = 'Triggers if anchore does not have access to the NPM data feed'
 
     def evaluate(self, image_obj, context):
         try:
@@ -175,14 +149,12 @@ class NoFeedTrigger(BaseTrigger):
 
 class NpmCheckGate(Gate):
         __gate_name__ = 'npms'
-        __aliases__ = ['npmcheck']
         __description__ = 'NPM Checks'
         __triggers__ = [
             NotLatestTrigger,
             NotOfficialTrigger,
             BadVersionTrigger,
-            PkgFullMatchTrigger,
-            PkgNameMatchTrigger,
+            PkgMatchTrigger,
             NoFeedTrigger
         ]
 
