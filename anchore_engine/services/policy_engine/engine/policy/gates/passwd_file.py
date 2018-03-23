@@ -75,7 +75,7 @@ class GroupIdMatchTrigger(BaseTrigger, PentryBlacklistMixin):
     __trigger_name__ = 'blacklist_groupids'
     __description__ = 'triggers if specified group id is found in the /etc/passwd file'
 
-    group_id_blacklist = CommaDelimitedNumberListParameter(name='group_ids', aliases=['groupidblacklist'], description='Comma-delimited list of groupids (numeric) that will cause the trigger ot fire if found in /etc/passwd')
+    group_id_blacklist = CommaDelimitedNumberListParameter(name='group_ids', description='Comma-delimited list of groupids (numeric) that will cause the trigger ot fire if found in /etc/passwd', is_required=True)
 
     def evaluate(self, image_obj, context):
         if not context.data.get('passwd_entries'):
@@ -93,7 +93,7 @@ class ShellMatchTrigger(BaseTrigger, PentryBlacklistMixin):
     __aliases__ = ['shellmatch']
     __description__ = 'triggers if specified login shell for any user is found in the /etc/passwd file'
 
-    shell_blacklist = CommaDelimitedStringListParameter(name='shells', aliases=['shellblacklist'], description='Comma-delimiter list of group')
+    shell_blacklist = CommaDelimitedStringListParameter(name='shells', description='Comma-delimiter list of group', is_required=True)
 
     def evaluate(self, image_obj, context):
         if not context.data.get('passwd_entries'):
