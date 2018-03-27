@@ -5,6 +5,7 @@ import datetime
 
 # anchore modules
 from anchore_engine.clients import catalog, simplequeue, policy_engine
+from anchore_engine.services.common import apiext_status
 import anchore_engine.services.common
 
 
