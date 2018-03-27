@@ -7,7 +7,7 @@ from connexion import request
 
 # anchore modules
 from anchore_engine.clients import catalog, policy_engine
-from anchore_engine.clients.policy_engine.generated.api_client import ApiException
+from anchore_engine.clients.policy_engine.generated.rest import ApiException
 import anchore_engine.services.common
 from anchore_engine.subsys import logger
 

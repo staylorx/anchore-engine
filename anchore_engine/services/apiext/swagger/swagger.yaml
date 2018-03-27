@@ -1692,4 +1692,3 @@ definitions:
       validator:
         type: object
         description: If present, a definition for validation of input. Typically a jsonschema object that can be used to validate an input against.
-

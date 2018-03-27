@@ -515,7 +515,8 @@ def describe_policy():
                     for param in param_list:
                         tps = TriggerParamSpec()
                         tps.name = param.name
-                        tps.description = '(Example: {}) {}'.format(param.example, param.description) if param.example else param.description
+                        tps.description = param.description
+                        tps.example = param.example
                         tps.validator = param.validator.json()
                         tps.required = param.required
                         if hasattr(param, '__superceded_by__'):
