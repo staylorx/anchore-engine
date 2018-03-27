@@ -1677,6 +1677,9 @@ definitions:
         description: Parameter name as it appears in policy document
       description:
         type: string
+      example:
+        type: string
+        description: An example value for the parameter (encoded as a string if the parameter is an object or list type)
       is_deprecated:
         type: boolean
         description: True if this trigger is deprecated

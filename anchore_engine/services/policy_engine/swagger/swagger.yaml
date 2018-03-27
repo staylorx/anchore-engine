@@ -880,6 +880,9 @@ definitions:
         description: Parameter name as it appears in policy document
       description:
         type: string
+      example:
+        type: string
+        description: An example value for the parameter (encoded as a string if the parameter is an object or list type)
       required:
         description: Is this a required parameter or optional. If required it must be present in the json and validate based on the provided validator. If optional it can be present in json and null or omitted.
         type: boolean
