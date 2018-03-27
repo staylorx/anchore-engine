@@ -115,9 +115,9 @@ class InstructionCheckTrigger(ParameterizedDockerfileModeBaseTrigger):
     __trigger_name__ = 'instruction'
     __description__ = 'Triggers if any directives in the list are found to match the described condition in the dockerfile. For example: "instruction":"from", "check": "=", "value": "scratch", would fire for images built from scratch'
 
-    instruction = EnumStringParameter(name='instruction', example_str='"from"', description='The Dockerfile instruction to check', enum_values=DIRECTIVES, is_required=True, related_to='check', sort_order=1)
-    operator = EnumStringParameter(name='check', example_str='"="', description='The type of check to perform', enum_values=CONDITIONS, is_required=True, related_to='directive, check_value', sort_order=2)
-    compare_to = TriggerParameter(name='value', example_str='"scratch"', description='The value to check the dockerfile instruction against', is_required=False, related_to='directive, check', validator=TypeValidator("string"), sort_order=3)
+    instruction = EnumStringParameter(name='instruction', example_str='from', description='The Dockerfile instruction to check', enum_values=DIRECTIVES, is_required=True, related_to='check', sort_order=1)
+    operator = EnumStringParameter(name='check', example_str='=', description='The type of check to perform', enum_values=CONDITIONS, is_required=True, related_to='directive, check_value', sort_order=2)
+    compare_to = TriggerParameter(name='value', example_str='scratch', description='The value to check the dockerfile instruction against', is_required=False, related_to='directive, check', validator=TypeValidator("string"), sort_order=3)
 
     _operations_requiring_check_val = [
         '=', '!=', 'like', 'not_like', 'in', 'not_in'
@@ -163,8 +163,8 @@ class ExposedPortsTrigger(ParameterizedDockerfileModeBaseTrigger):
     __trigger_name__ = 'exposed_ports'
     __description__ = 'Evaluates on the set of ports found to be exposed in the dockerfile or docker layer history. Allows configuring whitelist or blacklist behavior. If allowed=True then any ports found exposed that are not in the list will cause the trigger to fire. If allowed=False than any ports exposed that are in the list will cause the trigger to fire.'
 
-    ports = CommaDelimitedNumberListParameter(name='ports', example_str='"80,8080,8088"', description='List of port numbers that will cause the trigger to fire', is_required=True, sort_order=1)
-    allowed = BooleanStringParameter(name='allowed', example_str='"false"', description='Whether to trigger on matches or non-matches', is_required=True, sort_order=2)
+    ports = CommaDelimitedNumberListParameter(name='ports', example_str='80,8080,8088', description='List of port numbers that will cause the trigger to fire', is_required=True, sort_order=1)
+    allowed = BooleanStringParameter(name='allowed', example_str='false', description='Whether to trigger on matches or non-matches', is_required=True, sort_order=2)
 
     def _evaluate(self, image_obj, context):
         if self.allowed.value():

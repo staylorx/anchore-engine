@@ -103,8 +103,8 @@ class BlacklistedGemTrigger(BaseTrigger):
     __trigger_name__ = 'blacklist'
     __description__ = 'Triggers if the evaluated image has an GEM package installed that matches one in the list given as a param (package_name|vers)'
 
-    name = TriggerParameter(validator=TypeValidator('string'), name='name', is_required=True, description='Gem name to blacklist', example_str='"time_diff"', sort_order=1)
-    version = TriggerParameter(validator=TypeValidator('string'), name='version', is_required=False, description='Version to blacklist specifically', example_str='"0.2.9"', sort_order=2)
+    name = TriggerParameter(validator=TypeValidator('string'), name='name', is_required=True, description='Gem name to blacklist', example_str='time_diff', sort_order=1)
+    version = TriggerParameter(validator=TypeValidator('string'), name='version', is_required=False, description='Version to blacklist specifically', example_str='0.2.9', sort_order=2)
 
     def evaluate(self, image_obj, context):
         """

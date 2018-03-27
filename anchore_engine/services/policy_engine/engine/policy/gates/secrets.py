@@ -13,8 +13,8 @@ class SecretContentMatchTrigger(BaseTrigger):
     __trigger_name__ = 'content_regex_match'
     __description__ = 'Triggers if the content search analyzer has found any matches with the configured and named regexes. Matches are filtered by the content_regex_name and filename_regex if they are set'
 
-    secret_contentregexp = TriggerParameter(name='content_regex_name', validator=TypeValidator('string'), example_str='"{}"'.format(default_included_regex_names[0]), description='Name of content regexps configured in the analyzer that should trigger if found in the image, instead of triggering for any match. Names available by default are: {}'.format(default_included_regex_names))
-    name_regexps = TriggerParameter(name='filename_regex', validator=TypeValidator('string'), example_str='"/etc/.*"', description='Regexp to filter the content matched files by')
+    secret_contentregexp = TriggerParameter(name='content_regex_name', validator=TypeValidator('string'), example_str='AWS_SECRET_KEY'.format(default_included_regex_names[0]), description='Name of content regexps configured in the analyzer that should trigger if found in the image, instead of triggering for any match. Names available by default are: {}'.format(default_included_regex_names))
+    name_regexps = TriggerParameter(name='filename_regex', validator=TypeValidator('string'), example_str='/etc/.*', description='Regexp to filter the content matched files by')
 
     def evaluate(self, image_obj, context):
         match_filter = self.secret_contentregexp.value(default_if_none=[])
